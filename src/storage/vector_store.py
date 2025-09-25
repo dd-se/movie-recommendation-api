@@ -71,10 +71,7 @@ def get_relevant_movies(
         where=where_filter,
         where_document=where_document_filter,
     )
-    ids = results["ids"][0]
-    print("IDS", ids)
     distances = results["distances"][0]
-    print(distances)
     metadatas = results["metadatas"][0]
     metadatas = [m for m, d in zip(metadatas, distances) if d < max_distance]
     logger.info("Retrieval completed")

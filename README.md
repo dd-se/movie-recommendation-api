@@ -1,4 +1,7 @@
-# Movie Recommendation API
+<p align="center">
+  <img src="src/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
+</p>
+<p align="center"><em>Find the right movie, instantly.</em></p>
 
 A FastAPI-based API for discovering and recommending movies. It integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search and includes user authentication, recommendation tracking, and scheduled background jobs for data processing.
 
@@ -22,13 +25,13 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
 - **External API**: TMDB for movie data
 
 ## Installation
-- Python 3.10+
+- Python 3.11+
 - Install dependencies with pip or uv:
     ```bash
     pip install -r requirements.txt
     ```
     ```bash
-    uv sync
+    uv sync --group prod
     ```
 
 - **Configure Environment Variables**:
@@ -63,7 +66,7 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
 - `release_date_from` / `release_date_to`: Date range.
 - `runtime_min` / `runtime_max`: Runtime in minutes.
 - `vote_average_min` / `popularity_min`: Read more about it [here](https://developer.themoviedb.org/docs/popularity-and-trending).
-- Lists: `genres`, `production_countries`, `keywords`, `spoken_languages`
+- Lists: `cast`, `genres`, `production_countries`, `keywords`, `spoken_languages`
 
   Note: At least one filter must be provided to search for movies.
 
@@ -119,15 +122,15 @@ Type `--help` for more information.
 ## Queue Status
 The QueueStatus enum, defined in src/storage/db.py, represents the states of movie processing tasks in the MovieQueue table. It is used to manage the lifecycle of movie data updates and embeddings in the Movie Recommendation API. The enum values are:
 
-  - **refresh_data**: Indicates a movie's data needs to be refreshed from TMDB.
+  - **REFRESH_DATA**: Indicates a movie's data needs to be refreshed from TMDB.
 
-  - **preprocess_description**: Marks a movie for description preprocessing.
+  - **PREPROCESS_DESCRIPTION**: Marks a movie for description preprocessing.
 
-  - **create_embedding**: Signals that a preprocessed description is ready for vector embedding generation and storage in ChromaDB.
+  - **CREATE_EMBEDDING**: Signals that a preprocessed description is ready for vector embedding generation and storage in ChromaDB.
 
-  - **completed**: The movie's data processing (refresh, preprocessing, and embedding) is finished.
+  - **COMPLETED**: The movie's data processing (refresh, preprocessing, and embedding) is finished.
 
-  - **failed**: Processing failed after retries (max 3), with an error message stored in the queue.
+  - **FAILED**: Processing failed after retries (max 3), with an error message stored in the queue.
 
 ## Acknowledgments
 
