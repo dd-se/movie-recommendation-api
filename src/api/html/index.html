@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Movie API Client</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --sidebar-left-width: 365px;
+      --sidebar-right-width: 365px;
+      --bg-primary: #1a1a1d;
+      --bg-secondary: #25262a;
+      --bg-tertiary: #313237;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --accent: #8ab4f8;
+      --accent-hover: #a5c7fa;
+      --border: #3c4043;
+      --shadow: rgba(0, 0, 0, 0.25);
+      --error: #f28b82;
+      --success: #81c995;
+      --btn-text: #202124;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Google Sans', system-ui, sans-serif;
+      margin: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    a {
+      display: inline-block;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 1.1em;
+    }
+
+    a:hover,
+    a:active {
+      color: hotpink;
+    }
+
+    a img {
+      vertical-align: middle;
+    }
+
+    #tmdb-logo {
+      width: 318px;
+    }
+
+    /* --- Layout & Structure --- */
+    .container {
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .page-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-left-width) 1fr var(--sidebar-right-width);
+      gap: 32px;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+      background-color: var(--bg-secondary);
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      align-self: start;
+
+
+    }
+
+    .right-sidebar {
+      border-left: 1px solid var(--border);
+    }
+
+    .left-sidebar {
+      border-right: 1px solid var(--border);
+    }
+
+    /* .main-content {
+      padding-top: 24px;
+      padding-bottom: 24px;
+    } */
+
+    header {
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      position: static;
+      top: 0;
+      z-index: 20;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+
+    /* --- Authentication Section --- */
+    .auth-section {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .auth-section details {
+      position: relative;
+    }
+
+    .auth-section summary {
+      padding: 8px 16px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      list-style: none;
+      /* Hide dropdown arrow */
+    }
+
+    .auth-section summary::-webkit-details-marker {
+      display: none;
+      /* Hide dropdown arrow for Safari */
+    }
+
+
+    .auth-section summary:hover {
+      background-color: var(--border);
+    }
+
+    .auth-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 320px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 24px var(--shadow);
+      z-index: 10;
+    }
+
+    .auth-popover h3 {
+      margin: 0 0 16px;
+      font-size: 1.1rem;
+    }
+
+    .token-status {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    #tokenDisplay {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    /* --- Form Elements (Shared) --- */
+    .sidebar-form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .sidebar-form-grid .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    fieldset {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    fieldset h2 {
+      font-size: 1.5rem;
+      margin: 0 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(137, 180, 248, 0.2);
+    }
+
+    textarea {
+      font-family: 'Roboto Mono', monospace;
+      resize: vertical;
+      min-height: 120px;
+    }
+
+
+    /* --- Shared Button Styles --- */
+    .btn {
+      padding: 12px 24px;
+      cursor: pointer;
+      background-color: var(--accent);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: 'Google Sans', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(137, 180, 248, 0.2);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+
+    /* --- Results Section --- */
+    .results-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 50px;
+      margin: 25px 25px 25px 25px;
+    }
+
+
+    /* --- Status Page --- */
+    #status-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 600px;
+      margin-left: 45px;
+      color: var(--text-secondary);
+    }
+
+    #status-title {
+      font-size: 2.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-top: 5px;
+      margin-bottom: 0px;
+    }
+
+    #status-message {
+      font-size: 1rem;
+      max-width: 500px;
+    }
+
+    .movie-card {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px var(--shadow);
+      background: var(--bg-tertiary);
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+      width: 320px;
+      max-width: 100%;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .card-poster img {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: var(--bg-secondary);
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+    }
+
+    .card-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: var(--text-primary);
+    }
+
+    .card-meta {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .card-overview {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .card-extra {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .card-extra strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* --- Utilities & Toasts --- */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px var(--shadow);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-top: 4px solid var(--success);
+    }
+
+    .toast.error {
+      border-top: 4px solid var(--error);
+    }
+
+    /* Loader Spinner */
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--btn-text);
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      display: inline-block;
+      animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .hr-with-or {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #666;
+      margin: 20px 0;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .hr-with-or::before,
+    .hr-with-or::after {
+      content: "";
+      flex: 1;
+      border-top: 1px solid var(--border);
+      margin: 0 10px;
+    }
+
+    /* --- User Panel Styles --- */
+    .user-panel-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .user-panel-links li a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      color: var(--text-primary);
+      font-size: 1rem;
+      text-align: left;
+    }
+
+    .user-panel-links li a:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--accent);
+    }
+
+    .user-panel-links .placeholder-link {
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    .user-panel-links .placeholder-link:hover {
+      color: var(--text-secondary);
+      background-color: transparent;
+    }
+
+
+    .user-panel-links .separator {
+      height: 1px;
+      background-color: var(--border);
+      margin: 8px 0;
+    }
+
+    /* --- Modal Styles --- */
+    .modal {
+      display: flex;
+      /* Always flex for centering */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      justify-content: center;
+      align-items: center;
+
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    }
+
+    .modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: -1;
+    }
+
+    .modal-content {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .modal-close-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+      line-height: 1.8;
+    }
+
+    .modal-body p {
+      margin: 0 0 12px;
+    }
+
+    .modal-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-body strong {
+      color: var(--text-secondary);
+      margin-right: 8px;
+    }
+
+    .modal-body span {
+      color: var(--text-primary);
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .modal-footer .btn {
+      width: auto;
+      min-width: 100px;
+    }
+
+    /* Styles for new action buttons */
+    .results-actions-container {
+      display: flex;
+      gap: 16px;
+    }
+
+    .results-actions-container .btn {
+      width: 100%;
+      font-size: 0.875rem;
+      padding: 10px 16px;
+    }
+
+    /* --- Responsive Design --- */
+    @media (max-width: 1400px) {
+      .page-layout {
+        grid-template-columns: var(--sidebar-left-width) 1fr;
+        /* Switch to a two-column layout */
+      }
+
+      .right-sidebar {
+        display: none;
+        /* Hide the right column completely */
+      }
+    }
+
+    @media (max-width: 992px) {
+      .page-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .left-sidebar,
+      .right-sidebar {
+        display: none;
+      }
+
+      .main-content {
+        padding-top: 0;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .movie-card {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast-container"></div>
+  <header>
+
+    <div class="container header-content">
+      <img id="tmdb-logo" src="/img/logo.svg" alt="The Movie DB Logo">
+      <div class="auth-section">
+        <div class="token-status">
+          Token Status: <strong id="tokenDisplay">None</strong>
+        </div>
+        <details>
+          <summary>Authentication</summary>
+          <div class="auth-popover">
+            <h3>Login</h3>
+            <div class="form-group">
+              <label for="username">Email</label>
+              <input autocomplete="username" id="username" placeholder="Enter username">
+            </div>
+            <div class="form-group" style="margin-top: 16px; margin-bottom: 16px;">
+              <label for="password">Password</label>
+              <input id="password" type="password" placeholder="Enter password">
+            </div>
+            <div class="form-group" style="margin-top: 16px; margin-bottom: 16px;">
+              <label for="scopes">Scopes (space-separated)</label>
+              <input id="scopes" placeholder="movie:read movie:write" value="movie:read">
+            </div>
+            <button id="btnLogin" class="btn" style="margin-top: 16px; margin-bottom: 16px;">Login</button>
+
+            <div class="hr-with-or">OR</div>
+
+            <h3>Paste Token</h3>
+            <div class="form-group">
+
+              <input id="manualToken" placeholder="Paste bearer token here">
+            </div>
+            <button id="btnSetToken" style="margin-top: 24px; margin-bottom: 7px" class="btn">Set Token</button>
+          </div>
+        </details>
+
+        <!-- User Panel Added Here -->
+        <details>
+          <summary>User Panel</summary>
+          <div class="auth-popover" style="width: 220px;">
+            <ul class="user-panel-links" id="user-panel-list">
+              <li><a href="#" data-action="getUserInfo" data-endpoint="/auth/whoami" data-method="GET">Get User
+                  Info</a></li>
+              <li><a href="#" data-action="forgetRecommends" data-endpoint="/v2/user/forget-recommends"
+                  data-method="POST" title="Forget Recommended Movies">Erase History</a></li>
+            </ul>
+          </div>
+        </details>
+
+        <a href="/docs"><img style="width: 27.52px;" src="/img/FastAPI.svg" alt="FastAPI Logo"></a>
+      </div>
+    </div>
+  </header>
+
+  <form id="movie-request-form">
+    <div class="page-layout">
+      <aside class="left-sidebar">
+        <fieldset class="sidebar-form-grid">
+          <h2>Request Builder</h2>
+          <!-- Primary Inputs -->
+          <div class="form-group">
+            <label for="endpoint">Endpoint</label>
+            <select id="endpoint">
+              <option value="/v1/movie">Get a movie recommendation</option>
+              <option value="/v2/movie">Get a movie not recommended twice</option>
+              <option value="/v2/search">Search for movies</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input id="title" placeholder="WarGames">
+          </div>
+          <div class="form-group">
+            <label for="cast">Cast (comma-separated)</label>
+            <input id="cast" placeholder="Matthew Broderick, Dabney Coleman">
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="A computer hacker..."></textarea>
+          </div>
+          <div class="form-actions" style="margin-top: 16px;">
+            <button type="submit" id="btnSend" class="btn">
+              <span>Send Request</span>
+            </button>
+          </div>
+
+          <!-- Action buttons for sorting -->
+          <div id="results-actions" style="display: none; margin-top: 13px; border-top: 1px solid var(--border);">
+            <h3>Sort by</h3>
+            <div class="results-actions-container">
+              <button type="button" id="btnSortVote" class="btn">Vote Average</button>
+              <button type="button" id="btnResetSort" class="btn">Original</button>
+            </div>
+          </div>
+
+        </fieldset>
+      </aside>
+
+      <main class="main-content">
+        <div id="results-container">
+          <!-- Status Page -->
+          <div id="status-page">
+            <div id="status-icon">
+              <img src="/img/film.svg" width="156px">
+            </div>
+            <h2 id="status-title">Welcome</h2>
+            <p id="status-message">Use the request builder to find movie recommendations.</p>
+          </div>
+
+          <div id="results" class="results-grid" style="display: none;">
+            <!-- Movie cards will be rendered here -->
+          </div>
+
+        </div>
+      </main>
+
+      <aside class="right-sidebar">
+        <fieldset class="sidebar-form-grid">
+          <h2>Filters</h2>
+          <!-- Filters -->
+          <div id="search-endpoint-extras" class="form-group" style="display: none;">
+            <label for="n_results">Max Results</label>
+            <input id="n_results" type="number" min="1" max="21" value="6">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="vote_average_min">Min. Vote Avg</label>
+              <input id="vote_average_min" type="number" min="0" max="10" step="0.1" placeholder="7.5">
+            </div>
+            <div class="form-group">
+              <label for="popularity_min">Min. Popularity <a style
+                  href="https://developer.themoviedb.org/docs/popularity-and-trending">?</a></label>
+              <input id="popularity_min" type="number" min="0" step="0.1" placeholder="8.0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="release_date_from">Released After</label>
+              <input id="release_date_from" type="text" placeholder="YYYY-MM-DD">
+            </div>
+            <div class="form-group">
+              <label for="release_date_to">Released Before</label>
+              <input id="release_date_to" type="text" placeholder="YYYY-MM-DD">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="runtime_min">Min. Runtime</label>
+              <input id="runtime_min" type="number" min="0" placeholder="90">
+            </div>
+            <div class="form-group">
+              <label for="runtime_max">Max. Runtime</label>
+              <input id="runtime_max" type="number" min="0" placeholder="180">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="genres">Genres (comma-separated)</label>
+            <input id="genres" placeholder="Action, Drama">
+          </div>
+          <div class="form-group">
+            <label for="production_countries">Production Countries (comma-separated)</label>
+            <input id="production_countries" placeholder="Sweden, Turkey">
+          </div>
+          <div class="form-group">
+            <label for="keywords">Keywords (comma-separated)</label>
+            <input id="keywords" placeholder="dystopia, sacrifice">
+          </div>
+          <div class="form-group">
+            <label for="spoken_languages">Spoken Languages (comma-separated)</label>
+            <input id="spoken_languages" placeholder="Swedish, Turkish">
+          </div>
+        </fieldset>
+      </aside>
+    </div>
+  </form>
+
+  <!-- User Info Modal -->
+  <div id="userInfoModal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Current User Information</h2>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Email:</strong> <span id="modal-user-email"></span></p>
+        <p><strong>Token Scopes:</strong> <span id="modal-user-scopes"></span></p>
+        <p><strong>Token Expires:</strong> <span id="modal-user-expires"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button id="copyTokenBtn" class="btn">Copy Token</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    let bearerToken = null;
+    let originalMovieCards = [];
+
+    // --- DOM Elements ---
+    const tokenDisplay = document.getElementById("tokenDisplay");
+    const endpointSelect = document.getElementById("endpoint");
+    const searchEndpointExtras = document.getElementById("search-endpoint-extras");
+    const requestForm = document.getElementById("movie-request-form");
+    const sendButton = document.getElementById("btnSend");
+    const resultsContainer = document.getElementById("results");
+    const statusPage = document.getElementById("status-page");
+    const statusTitle = document.getElementById("status-title");
+    const statusMessage = document.getElementById("status-message");
+    const resultsActions = document.getElementById("results-actions");
+    const btnSortVote = document.getElementById("btnSortVote");
+    const btnResetSort = document.getElementById("btnResetSort");
+
+
+    // --- Toast Notifications ---
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => toast.remove());
+      }, 3000);
+    }
+
+    // --- Authentication ---
+    function setToken(t) {
+      bearerToken = t;
+      if (t) {
+        tokenDisplay.textContent = "Active";
+        tokenDisplay.style.color = 'var(--success)';
+      } else {
+        tokenDisplay.textContent = "None";
+        tokenDisplay.style.color = 'var(--error)';
+      }
+    }
+
+
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const scopes = document.getElementById("scopes").value.trim();
+      if (!username || !password) {
+        showToast("Please enter username and password", "error");
+        return;
+      }
+
+      const params = new URLSearchParams({
+        username,
+        password,
+        scope: scopes || "",
+      });
+
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "accept": "application/json"
+          },
+          body: params.toString()
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.detail, "error");
+          return;
+        }
+        setToken(data.access_token || data.token || null);
+        showToast("Successfully logged in!");
+        document.querySelector('.auth-section details').removeAttribute('open');
+      } catch (err) {
+        showToast("Login error: " + err.message, "error");
+      }
+    }
+
+    document.getElementById("btnLogin").addEventListener("click", login);
+
+    document.getElementById("btnSetToken").addEventListener("click", () => {
+      const t = document.getElementById("manualToken").value.trim();
+      if (!t) {
+        showToast("Please paste a token first", "error");
+        return;
+      }
+      setToken(t);
+      showToast("Token has been set successfully!");
+      document.querySelector('.auth-section details').removeAttribute('open');
+    });
+
+    // --- UI Logic ---
+    function toggleNResults() {
+      // Show when endpoint is "/v2/search"
+      searchEndpointExtras.style.display = (endpointSelect.value === "/v2/search") ? "block" : "none";
+    }
+    endpointSelect.addEventListener("change", toggleNResults);
+    toggleNResults();
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        sendButton.disabled = true;
+        sendButton.innerHTML = `<span class="loader"></span><span>Processing...</span>`;
+      } else {
+        sendButton.disabled = false;
+        sendButton.innerHTML = `<span>Send Request</span>`;
+      }
+    }
+
+    // --- Status Page Management ---
+    function showStatusPage(title, message) {
+      statusTitle.textContent = title;
+      statusMessage.textContent = message;
+      statusPage.style.display = 'flex';
+      resultsContainer.style.display = 'none';
+      resultsActions.style.display = 'none';
+    }
+
+    function hideStatusPage() {
+      statusPage.style.display = 'none';
+      resultsContainer.style.display = 'flex';
+    }
+
+    // --- API Request ---
+    requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault(); // Prevent default form submission
+      resultsContainer.innerHTML = ""; // Clear previous results
+      resultsActions.style.display = 'none'; // Hide action buttons
+
+      if (!bearerToken) {
+        showToast("Bearer token is not set!", "error")
+        showStatusPage("Access Denied", "Please log in or set a token before sending a request.");
+        return;
+      }
+
+      setLoading(true);
+
+      function processDate(id, type) {
+        // type = "from" or "to"
+        const value = document.getElementById(id).value.trim();
+
+        if (!value) return null;
+
+        const parts = value.split("-");
+
+        if (parts.length === 1) {
+          // Year only
+          return type === "from"
+            ? `${parts[0]}-01-01`
+            : `${parts[0]}-12-31`;
+        }
+
+        if (parts.length === 2) {
+          // Year + Month only
+          return type === "from"
+            ? `${parts[0]}-${parts[1].padStart(2, "0")}-01`
+            : `${parts[0]}-${parts[1].padStart(2, "0")}-31`;
+        }
+
+        if (parts.length === 3) {
+          // Full date provided
+          return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+        }
+
+        return null; // invalid
+      }
+
+      function processValue(id, type = 'string') {
+        // Get the value from the DOM and convert it to the requested datatype
+        const value = document.getElementById(id).value.trim();
+        if (!value) return null;
+        if (type === 'number') return parseFloat(value);
+        if (type === 'integer') return parseInt(value);
+        if (type === 'array') return value.split(",").map(item => item.trim()).filter(Boolean);
+        return value;
+      };
+
+      const body = {};
+
+      const title = processValue('title');
+      if (title) body.title = title;
+
+      const description = processValue('description');
+      if (description) body.description = description;
+
+      const release_date_from = processDate('release_date_from', "from");
+      if (release_date_from) body.release_date_from = release_date_from;
+
+      const release_date_to = processDate('release_date_to', "to");
+      if (release_date_to) body.release_date_to = release_date_to;
+
+      const runtime_min = processValue('runtime_min', 'integer');
+      if (runtime_min) body.runtime_min = runtime_min;
+
+      const runtime_max = processValue('runtime_max', 'integer');
+      if (runtime_max) body.runtime_max = runtime_max;
+
+      const cast = processValue('cast', 'array');
+      if (cast && cast.length) body.cast = cast;
+
+      const vote_average_min = processValue('vote_average_min', 'number');
+      if (vote_average_min) body.vote_average_min = vote_average_min;
+
+      const popularity_min = processValue('popularity_min', 'number');
+      if (popularity_min) body.popularity_min = popularity_min;
+
+      const genres = processValue('genres', 'array');
+      if (genres && genres.length) body.genres = genres;
+
+      const production_countries = processValue('production_countries', 'array');
+      if (production_countries && production_countries.length) body.production_countries = production_countries;
+
+      const keywords = processValue('keywords', 'array');
+      if (keywords && keywords.length) body.keywords = keywords;
+
+      const spoken_languages = processValue('spoken_languages', 'array');
+      if (spoken_languages && spoken_languages.length) body.spoken_languages = spoken_languages;
+
+
+      if (endpointSelect.value === "/v2/search") {
+        const n_results = processValue('n_results', 'integer');
+        if (n_results) body.n_results = n_results;
+      }
+
+      try {
+        const res = await fetch(endpointSelect.value, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + bearerToken
+          },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+
+          if (res.status === 404) {
+            showStatusPage("No Movies Found", "Try adjusting your search parameters.");
+          }
+
+          else if (res.status === 422) {
+            showStatusPage("Validation Error", data.detail[0]["msg"]);
+          }
+
+          else {
+            showStatusPage(res.status + " Error Occurred", data.detail);
+          }
+
+        } else {
+          renderResults(data);
+        }
+      } catch (err) {
+        showStatusPage("Network error", err.message);
+
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // --- Rendering ---
+    function renderResults(movies) {
+
+      hideStatusPage();
+      resultsContainer.innerHTML = ""; // Clear previous results
+      originalMovieCards = []; // Clear previous original order
+
+      if (Array.isArray(movies) && movies.length > 0) {
+        resultsActions.style.display = 'block'; // Show the actions container
+      } else {
+        resultsActions.style.display = 'none';
+      }
+
+      movies.forEach(movie => {
+        const card = document.createElement("div");
+        card.className = "movie-card";
+        card.dataset.voteAverage = movie.vote_average || 0;
+
+        const posterUrl = movie.poster_path ?
+          `https://image.tmdb.org/t/p/w342${movie.poster_path}` :
+          "/img/placeholder_mov.jpg";
+
+        card.innerHTML = `
+          <div class="card-poster">
+            <img src="${posterUrl}" alt="Poster for ${movie.title || 'Untitled'}">
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">${movie.title || "Untitled"}</h3>
+            <div class="card-meta">
+              <span title="Release Year">${movie.release_date ? movie.release_date.split('-')[0] : "N/A"}</span> &bull;
+              <span title="Runtime">${movie.runtime || "?"} min</span> &bull;
+              <span title="Rating">⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span> &bull;
+              <span title="Vote Count">🗳️ ${movie.vote_count ? movie.vote_count : 'N/A'}</span> &bull;
+              <span title="Popularity score">📈 ${movie.popularity ? movie.popularity.toFixed(1) : 'N/A'}</span>
+            </div>
+            <p class="card-overview">${movie.overview || "No overview available."}</p>
+            <div class="card-extra">
+              <strong>Genres:</strong> ${movie.genres || "N/A"}
+            </div>
+          </div>
+        `;
+        resultsContainer.appendChild(card);
+        originalMovieCards.push(card); // Save to original order
+      });
+    }
+
+    // --- Sorting and Resetting Logic ---
+    btnSortVote.addEventListener('click', () => {
+      const cards = Array.from(resultsContainer.querySelectorAll('.movie-card'));
+      cards.sort((a, b) => {
+        const voteA = parseFloat(a.dataset.voteAverage);
+        const voteB = parseFloat(b.dataset.voteAverage);
+        return voteB - voteA; // Sort in descending order
+      });
+
+      // Re-append sorted cards
+      resultsContainer.innerHTML = '';
+      cards.forEach(card => resultsContainer.appendChild(card));
+    });
+
+    btnResetSort.addEventListener('click', () => {
+      resultsContainer.innerHTML = '';
+      originalMovieCards.forEach(card => resultsContainer.appendChild(card));
+    });
+
+
+    // --- Modal Logic ---
+    const userInfoModal = document.getElementById("userInfoModal");
+    const modalEmail = document.getElementById("modal-user-email");
+    const modalScopes = document.getElementById("modal-user-scopes");
+    const modalExpires = document.getElementById("modal-user-expires");
+
+    function copyTokenOnClick() {
+      if (bearerToken) {
+        navigator.clipboard.writeText(bearerToken)
+          .then(() => {
+            showToast("Bearer token copied to clipboard!");
+          })
+          .catch(err => {
+            showToast("Failed to copy token: " + err, "error");
+          });
+      }
+    }
+    const copyTokenBtn = document.getElementById("copyTokenBtn");
+
+
+    function openUserInfoModal() {
+      if (userInfoModal) userInfoModal.classList.add("show");
+    }
+    function closeUserInfoModal() {
+      if (userInfoModal) userInfoModal.classList.remove("show");
+    }
+
+    // Listeners to close the modal
+    userInfoModal.querySelector(".modal-close-btn").addEventListener("click", closeUserInfoModal);
+    userInfoModal.querySelector(".modal-backdrop").addEventListener("click", closeUserInfoModal);
+    copyTokenBtn.addEventListener('click', copyTokenOnClick);
+
+
+    // --- [REFACTORED] User Panel Logic ---
+    async function handleUserPanelAction(event) {
+      const link = event.target.closest('a');
+      if (!link) return; // Exit if the click wasn't on a link
+
+      event.preventDefault();
+      const { action, endpoint, method } = link.dataset;
+
+      // Always close the dropdown when an action is taken
+      const detailsElement = link.closest('details');
+      const closePanel = () => detailsElement?.removeAttribute('open');
+
+      if (action === 'placeholder') {
+        showToast("This feature is not yet implemented.", "error");
+        closePanel();
+        return;
+      }
+
+      // Handle actions that require authentication and an API call
+      if (!bearerToken) {
+        showToast("Please authenticate first.", "error");
+        closePanel();
+        return;
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: method || "GET", // Default to GET if not specified
+          headers: {
+            "Authorization": "Bearer " + bearerToken,
+            "Accept": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showToast(data.detail || "An unknown error occurred.", "error");
+        } else {
+          // --- Handle success cases based on the action ---
+          switch (action) {
+            case 'getUserInfo':
+              modalEmail.textContent = data.email || 'N/A';
+              const scopes = data.access_token_scopes;
+              modalScopes.textContent = (scopes && scopes.length) ? scopes.join(', ') : 'None';
+              const expires = data.access_token_expires;
+              modalExpires.textContent = expires ? new Date(expires).toLocaleString() : 'N/A';
+              openUserInfoModal();
+              break;
+
+            case 'forgetRecommends':
+              showToast(data.detail || "Action successful.", "success");
+              break;
+
+            default:
+              // Generic success message if no specific handler is found
+              showToast("Action successful.", "success");
+              break;
+          }
+        }
+      } catch (error) {
+        showToast("Request failed: " + error.message, "error");
+      } finally {
+        closePanel();
+      }
+    }
+
+    // Attach the single event listener to the list
+    document.getElementById('user-panel-list').addEventListener('click', handleUserPanelAction);
+
+  </script>
+</body>
+
+</html>
