@@ -3,8 +3,6 @@
 </p>
 <p align="center"><em>Find the right movie, instantly.</em></p>
 <hr>
-<br>
-
 A FastAPI-based API for discovering and recommending movies. It integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search and includes user authentication, recommendation tracking, and scheduled background jobs for data processing.
 
 ## Features
