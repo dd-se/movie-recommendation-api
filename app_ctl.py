@@ -52,8 +52,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    print(args.__dict__)
-
     if args.command == "backup":
         backup_db()
 

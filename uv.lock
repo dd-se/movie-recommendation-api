@@ -1138,16 +1138,16 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
 prod = [
     { name = "alembic" },
     { name = "einops" },
     { name = "pandas" },
     { name = "regex" },
     { name = "sentence-transformers" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
 ]
 
 [package.metadata]
@@ -1163,16 +1163,16 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=6.2.1" },
-]
 prod = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "einops", specifier = ">=0.8.1" },
     { name = "pandas", specifier = ">=2.3.2" },
     { name = "regex", specifier = ">=2025.9.1" },
     { name = "sentence-transformers", specifier = ">=5.1.1" },
+]
+test = [
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
 ]
 
 [[package]]

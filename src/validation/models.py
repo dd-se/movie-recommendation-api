@@ -457,7 +457,7 @@ class MovieFilter(BaseModel):
             value = value[1:]
             return query.where(~attribute.icontains(value))
 
-        return query.where(~attribute.icontains(value))
+        return query.where(attribute.icontains(value))
 
     def _build_sql_query_helper(self, query: Select, attribute: InstrumentedAttribute, values: list[str]):
         conditions = []

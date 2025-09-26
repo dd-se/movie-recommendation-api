@@ -2,6 +2,8 @@
   <img src="src/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
 </p>
 <p align="center"><em>Find the right movie, instantly.</em></p>
+<hr>
+<br>
 
 A FastAPI-based API for discovering and recommending movies. It integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search and includes user authentication, recommendation tracking, and scheduled background jobs for data processing.
 
@@ -31,7 +33,12 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
     pip install -r requirements.txt
     ```
     ```bash
+    # For running the application
     uv sync --group prod
+    ```
+    ```bash
+    # If planning on only running the tests
+    uv sync --group test
     ```
 
 - **Configure Environment Variables**:
@@ -52,7 +59,7 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
 
 - Run the FastAPI server using Uvicorn:
     ```bash
-    uvicorn api.main:app [--reload]
+    uvicorn src.api.main:app [--reload]
     ```
 
     The movie request builder will be available at `http://127.0.0.1:8000`. Served via static files from `src/api/html/`.

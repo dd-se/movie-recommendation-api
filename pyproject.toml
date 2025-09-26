@@ -22,7 +22,7 @@ prod = [
     "regex>=2025.9.1",
     "alembic>=1.16.5",
 ]
-dev = [
+test = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
 ]

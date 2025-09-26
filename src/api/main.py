@@ -10,9 +10,8 @@ from fastapi.staticfiles import StaticFiles
 
 from ..logger import get_logger
 from ..scheduler import add_job, shutdown_scheduler, start_scheduler
-from ..scheduler.jobs import JOBS, process_queue_add_to_vector_store, process_queue_descriptions
+from ..scheduler.jobs import JOBS
 from ..storage.db import init_db
-from ..storage.vector_store import load_collection
 from .admin import admin_router
 from .auth import auth_router
 from .v1 import v1_router
@@ -26,9 +25,6 @@ async def lifespan(app: FastAPI):
     # On startup do this
     init_db()
     start_scheduler()
-    # process_queue_descriptions()
-    # load_collection()
-    # process_queue_add_to_vector_store()
     for job in JOBS:
         add_job(*job)
     logger.warning("API server started")

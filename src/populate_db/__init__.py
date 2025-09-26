@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 POP_DB_PATH = Path(__file__).parent.parent.parent / "data" / "populate_db"
 POP_DB_PATH.mkdir(parents=True, exist_ok=True)
 DAILY_IDS_EXPORT = POP_DB_PATH / "tmdb_daily_ids_export.json"
-FILTERED_MOVIES = POP_DB_PATH / "tmdb_ids_filtered.csv"
+FILTERED_DAILY_IDS_EXPORT = POP_DB_PATH / "tmdb_ids_filtered.csv"
 STATE_FILE = POP_DB_PATH / "resume_from_index.json"
 LATIN_CHARS = regex.compile(r"[\p{Latin}0-9\s.,!?;:/\'\"()\-\[\]–—“”‘’@]")
 
@@ -113,23 +113,24 @@ def populate_db(url: str | None, resume: bool):
         if STATE_FILE.exists():
             STATE_FILE.unlink()
 
-        if FILTERED_MOVIES.exists():
-            FILTERED_MOVIES.unlink()
+        if FILTERED_DAILY_IDS_EXPORT.exists():
+            FILTERED_DAILY_IDS_EXPORT.unlink()
         download_and_extract_export_file(url)
     else:
         logger.info("URL not provided. Resuming...")
 
-    if FILTERED_MOVIES.exists():
-        movies = pd.read_csv(FILTERED_MOVIES)
+    if FILTERED_DAILY_IDS_EXPORT.exists():
+        movies = pd.read_csv(FILTERED_DAILY_IDS_EXPORT)
     elif DAILY_IDS_EXPORT.exists():
         movies = pd.read_json(DAILY_IDS_EXPORT, lines=True)
         mask_is_mostly_latin = movies["original_title"].apply(is_mostly_latin)
         print("Movie count:", len(movies))
         movies = movies[mask_is_mostly_latin]
         print("Movie count after filtering:", len(movies))
-        movies.to_csv(FILTERED_MOVIES, index=False)
+        movies.to_csv(FILTERED_DAILY_IDS_EXPORT, index=False)
     else:
-        logger.info("Files not found. Provide a URL and start over.")
+        logger.info("File not found. Please provide an URL with --url option and try again.")
+        exit(1)
 
     process_movies(movies)
 
