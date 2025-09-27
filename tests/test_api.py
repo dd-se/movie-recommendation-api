@@ -37,6 +37,17 @@ def test_v2_endpoints(client: TestClient):
     assert len(results) == 1
     assert results[0]["title"] == "Fight Club"
 
+    search = MovieSearch(title="Fight Club", n_results=1)
+    response = client.post("/v2/search", json=search.model_dump())
+    assert response.status_code == 200
+    results = response.json()
+    assert len(results) == 1
+    assert results[0]["title"] == "Fight Club"
+
+    search = MovieSearch(title="Test", n_results=1)
+    response = client.post("/v2/search", json=search.model_dump())
+    assert results[0]["title"] == "Test Movie"
+
     # Should raise validation error
     response = client.post("/v2/search", json={"search_text": "Fight Club", "n_results": 1})
     assert response.status_code == 422

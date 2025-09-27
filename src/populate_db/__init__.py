@@ -4,7 +4,9 @@ load_dotenv()
 import gzip
 import json
 import shutil
+import threading
 from pathlib import Path
+from time import sleep
 
 import pandas as pd
 import regex
@@ -14,6 +16,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ..external.tmdb import fetch_movie_details
 from ..logger import get_logger
+from ..scheduler.jobs import process_queue_add_to_vector_store, process_queue_descriptions
 from ..storage.db import Movie, MovieQueue, get_db, init_db
 
 logger = get_logger(__name__)
@@ -58,11 +61,20 @@ def load_state():
     return 0
 
 
+def finish_processing_in_background(stop_processing: threading.Event):
+    while not stop_processing.is_set():
+        process_queue_descriptions()
+        process_queue_add_to_vector_store()
+        sleep(10)
+
+
 def process_movies(movies: pd.DataFrame):
     start_idx = load_state()
     logger.info(f"Resuming from index '{start_idx}'")
+    db = get_db()
+    stop_processing = threading.Event()
+    threading.Thread(target=finish_processing_in_background, args=(stop_processing,), daemon=True).start()
     try:
-        db = get_db()
         current_ids = set(db.execute(select(Movie.tmdb_id)).scalars().all())
         added_counter = 0
         for idx, row in movies.iloc[start_idx:].iterrows():
@@ -82,7 +94,7 @@ def process_movies(movies: pd.DataFrame):
                 db.add_all([movie, queue_entry])
                 added_counter += 1
 
-                if added_counter > 0 and added_counter % 25 == 0:
+                if added_counter % 50 == 0:
                     db.commit()
                     save_state(idx + 1)
 
@@ -100,7 +112,9 @@ def process_movies(movies: pd.DataFrame):
             except Exception as e:
                 logger.critical(f"Unexpected error at row '{idx}', id={row_id}: {e}")
     finally:
+        stop_processing.set()
         db.close()
+
     save_state(len(movies))
     logger.info("Processed all available rows")
 

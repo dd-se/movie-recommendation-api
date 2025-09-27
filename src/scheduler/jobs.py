@@ -1,3 +1,5 @@
+from typing import Any
+
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select
 
@@ -165,7 +167,7 @@ def process_queue_add_to_vector_store():
 
         ids: list[str] = []
         descriptions: list[str] = []
-        metadatas: list[dict[str, int]] = []
+        metadatas: list[dict[str, Any]] = []
 
         try:
             for movie_queue in movie_queues:
