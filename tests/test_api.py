@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from src.validation import MovieFilter, MovieSearch, UserCreate

@@ -2,13 +2,15 @@
   <img src="src/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
 </p>
 <p align="center"><em>Find the right movie, instantly.</em></p>
-<hr>
+
+## About
+
 A FastAPI-based API for discovering and recommending movies. It integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search and includes user authentication, recommendation tracking, and scheduled background jobs for data processing.
 
 ## Features
 
 - **User Authentication**: Secure signup, login, and JWT-based access control with scopes (e.g., `movie:read`, `movie:write`).
-- **Movie Recommendations**: Get personalized recommendations based on filters like description, genres, ratings, and more.
+- **Movie Recommendations**: Get recommendations based on filters like description, genres, ratings, and more.
 - **Semantic Search**: Uses vector embeddings to find movies similar to a user-provided description.
 - **TMDB Integration**: Fetches movie data (now playing, top-rated, popular) from TMDB and stores it in a SQLite database.
 - **Background Scheduling**: APScheduler jobs to periodically fetch new movies from TMDB, refresh existing data, preprocess descriptions, and update the vector store.
@@ -60,9 +62,9 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
     uvicorn src.api.main:app [--reload]
     ```
 
-    The movie request builder will be available at `http://127.0.0.1:8000`. Served via static files from `src/api/html/`.
+    The movie request builder will be available at `http://127.0.0.1:8000`, served via static files from `src/api/html/`.
 
-    The documentation endpoint will be available at  `http://127.0.0.1:8000/docs`
+    The documentation endpoint will be available at  `http://127.0.0.1:8000/docs`.
 
 ### Filtering Movies
 

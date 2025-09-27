@@ -42,12 +42,10 @@ def mock_call_external_api(url: str, params: dict):
         return MockResponseObject(GENERIC_RESPONSE)
 
     movie_id = url.split("/")[-1]
-
     if movie_id == "99999999":
         raise RequestException("Movie not found")
 
-    else:
-        return MockResponseObject(MOVIE_RESPONSE)
+    return MockResponseObject(MOVIE_RESPONSE)
 
 
 @pytest.fixture(scope="function")
@@ -113,7 +111,7 @@ def mock_scheduler(monkeypatch):
     monkeypatch.setattr("src.scheduler.background_scheduler", dummy_scheduler)
 
 
-async def override_get_current_active_user():
+async def override_get_current_user():
     test_user = User(id=1, email="test@example.com", hashed_password="none")
     test_user.access_token_expires = datetime.now(timezone.utc)
     test_user.access_token_scopes = ["movie:read"]
@@ -122,7 +120,7 @@ async def override_get_current_active_user():
 
 @pytest.fixture(scope="function")
 def client(in_memory_test_db, mock_external_api_requests, mock_scheduler):
-    app.dependency_overrides[get_current_user] = override_get_current_active_user
+    app.dependency_overrides[get_current_user] = override_get_current_user
     client = TestClient(app)
 
     yield client

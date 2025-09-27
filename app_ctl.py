@@ -29,7 +29,7 @@ def parse_args():
     status_parser.add_argument("email", help="User email")
     status_parser.add_argument("disabled", choices=["true", "false"], help="Set 'false' to enable or 'true' to disable")
 
-    movie_desciption_queues_parser = subparsers.add_parser("queue", help="Change the state of a MovieDescriptionQueue row")
+    movie_desciption_queues_parser = subparsers.add_parser("queue", help="Change the state of a MovieQueue row")
     movie_desciption_queues_parser.add_argument(
         "tmdb_ids",
         nargs="*",

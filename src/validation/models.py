@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 
 class MovieBase(BaseModel):
-    """Our validation model for transforming the TMDB API data for storage in our database."""
+    """Our validation model for transforming the TMDB API data for storage in the database."""
 
     model_config = ConfigDict(str_strip_whitespace=True, str_min_length=1)
 
@@ -92,28 +92,14 @@ class MovieBase(BaseModel):
         if not self.genres or not self.spoken_languages:
             return False
 
-        langs = self.spoken_languages.lower().split(", ") if self.spoken_languages else []
-        genres = self.genres.lower().split(", ") if self.genres else []
+        langs = self.spoken_languages.lower().split(", ")
+        genres = self.genres.lower().split(", ")
 
         has_my_lang = "english" in langs or "turkish" in langs or "swedish" in langs
         is_not_documentary_or_music = ["documentary"] != genres and ["music"] != genres
         has_not_documentary_and_music = not ("documentary" in genres and "music" in genres)
 
         return has_my_lang and is_not_documentary_or_music and has_not_documentary_and_music
-
-    def get_description(self) -> str:
-        description = " ".join(
-            (
-                self.overview or "",
-                self.tagline or "",
-                self.keywords or "",
-                self.genres or "",
-                self.production_companies or "",
-                self.production_countries or "",
-                self.spoken_languages or "",
-            )
-        )
-        return description
 
 
 class MovieCreate(MovieBase):
@@ -452,14 +438,7 @@ class MovieFilter(BaseModel):
 
         return q
 
-    def _build_sql_query_helper_str(self, query: Select, attribute: InstrumentedAttribute, value: str):
-        if value.startswith("!"):
-            value = value[1:]
-            return query.where(~attribute.icontains(value))
-
-        return query.where(attribute.icontains(value))
-
-    def _build_sql_query_helper(self, query: Select, attribute: InstrumentedAttribute, values: list[str]):
+    def _build_sql_query_helper(self, query: Select, attribute: InstrumentedAttribute, values: list[str]) -> Select:
         conditions = []
 
         for value in values:
