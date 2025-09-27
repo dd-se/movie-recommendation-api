@@ -107,7 +107,7 @@ class MovieCreate(MovieBase):
 
 
 class MovieSchema(BaseModel):
-    """Our response model for a movie stored in our database."""
+    """Our response model for a movie stored in the database."""
 
     tmdb_id: Annotated[int, Field(description="The unique identifier for the movie from TMDb.", examples=[24428])]
     title: Annotated[str, Field(description="The title of the movie.", examples=["The Avengers"])]
@@ -197,6 +197,11 @@ class MovieFilter(BaseModel):
     vote_average_min: Annotated[
         float | None,
         Field(description="The minimum average user vote on a scale of 0-10.", examples=[6.5], ge=0, le=10),
+    ] = None
+
+    vote_count_min: Annotated[
+        int | None,
+        Field(description="The minimum number of user votes.", examples=[100], ge=0),
     ] = None
 
     popularity_min: Annotated[
@@ -306,7 +311,7 @@ class MovieFilter(BaseModel):
         db: ApiSession,
         exclude_tmdb_ids: list[int] | None = None,
         vote_average_min: float = 6.4,
-        vote_count_gt: int = 50,
+        vote_count_min: int = 50,
         runtime_min: int = 70,
     ) -> tuple[dict | None, dict | None]:
         metadata_filters = []
@@ -315,7 +320,7 @@ class MovieFilter(BaseModel):
             metadata_filters.append({"tmdb_id": {"$nin": exclude_tmdb_ids}})
 
         metadata_filters.append({"vote_average": {"$gte": self.vote_average_min or vote_average_min}})
-        metadata_filters.append({"vote_count": {"$gt": vote_count_gt}})
+        metadata_filters.append({"vote_count": {"$gt": self.vote_count_min or vote_count_min}})
         metadata_filters.append({"runtime": {"$gte": self.runtime_min or runtime_min}})
 
         if self.release_date_from:
@@ -378,7 +383,7 @@ class MovieFilter(BaseModel):
         negation: bool = False,
         limit: int = 1,
         vote_average_min: float = 6.4,
-        vote_count_gt: int = 50,
+        vote_count_min: int = 50,
         runtime_min: int = 70,
     ) -> Select[tuple[Movie]]:
         q = select(Movie).limit(limit)
@@ -390,7 +395,8 @@ class MovieFilter(BaseModel):
                 q = q.where(Movie.tmdb_id.in_(tmdb_ids))
 
         if not self._has_description:
-            q = q.where(Movie.vote_count > vote_count_gt).order_by(
+            vote_count_min = self.vote_count_min or vote_count_min
+            q = q.where(Movie.vote_count > vote_count_min).order_by(
                 ((Movie.vote_average * Movie.vote_count) / (Movie.vote_count + 100)).desc(),
                 Movie.vote_count.desc(),
                 Movie.popularity.desc(),
@@ -415,8 +421,8 @@ class MovieFilter(BaseModel):
             if self.runtime_max:
                 q = q.where(Movie.runtime <= self.runtime_max)
 
-            v_min = self.vote_average_min or vote_average_min
-            q = q.where(Movie.vote_average >= v_min)
+            vote_average_min = self.vote_average_min or vote_average_min
+            q = q.where(Movie.vote_average >= vote_average_min)
 
             if self.popularity_min:
                 q = q.where(Movie.popularity >= self.popularity_min)

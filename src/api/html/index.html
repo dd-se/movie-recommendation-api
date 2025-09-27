@@ -717,6 +717,10 @@
               <option value="/v2/search">Search for movies</option>
             </select>
           </div>
+          <div id="search-endpoint-extras" class="form-group" style="display: none;">
+            <label for="n_results">Max Results</label>
+            <input id="n_results" type="number" min="1" max="21" value="6">
+          </div>
           <div class="form-group">
             <label for="title">Title</label>
             <input id="title" placeholder="WarGames">
@@ -769,14 +773,14 @@
         <fieldset class="sidebar-form-grid">
           <h2>Filters</h2>
           <!-- Filters -->
-          <div id="search-endpoint-extras" class="form-group" style="display: none;">
-            <label for="n_results">Max Results</label>
-            <input id="n_results" type="number" min="1" max="21" value="6">
-          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="vote_average_min">Min. Vote Avg</label>
-              <input id="vote_average_min" type="number" min="0" max="10" step="0.1" placeholder="7.5">
+              <input id="vote_average_min" type="number" min="0" max="10" step="0.1" placeholder="6.5" value="6.5">
+            </div>
+            <div class="form-group">
+              <label for="vote_count_min">Min. Vote Count</label>
+              <input id="vote_count_min" type="number" min="0" placeholder="50" value="50">
             </div>
             <div class="form-group">
               <label for="popularity_min">Min. Popularity <a style
@@ -1054,6 +1058,9 @@
       const vote_average_min = processValue('vote_average_min', 'number');
       if (vote_average_min) body.vote_average_min = vote_average_min;
 
+      const vote_count_min = processValue('vote_count_min', 'integer');
+      if (vote_count_min) body.vote_count_min = vote_count_min;
+
       const popularity_min = processValue('popularity_min', 'number');
       if (popularity_min) body.popularity_min = popularity_min;
 
@@ -1210,8 +1217,6 @@
     userInfoModal.querySelector(".modal-backdrop").addEventListener("click", closeUserInfoModal);
     copyTokenBtn.addEventListener('click', copyTokenOnClick);
 
-
-    // --- [REFACTORED] User Panel Logic ---
     async function handleUserPanelAction(event) {
       const link = event.target.closest('a');
       if (!link) return; // Exit if the click wasn't on a link

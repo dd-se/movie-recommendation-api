@@ -143,7 +143,7 @@ def process_queue_descriptions():
                 queue.status = QueueStatus.CREATE_EMBEDDING
 
             db.commit()
-
+            logger.info(f"Processed descriptions for '{len(movie_queues)}' movie(s).")
         except Exception as e:
             logger.error(f"Unexpected error while processing movie descriptions: '{e}'", exc_info=True)
             db.rollback()

@@ -230,9 +230,9 @@ class Movie(Base):
             "title": self.title,
             "runtime": self.runtime,
             "vote_average": self.vote_average,
+            "vote_count": self.vote_count,
             "popularity": self.popularity,
             "status": self.status,
-            "vote_count": self.vote_count,
         }
         if self.overview:
             metadata["overview"] = self.overview
