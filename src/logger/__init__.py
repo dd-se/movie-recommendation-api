@@ -5,7 +5,7 @@ from pathlib import Path
 LOG_DIR = Path(__file__).parent.parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "logs.txt"
-LOGLEVEL = os.getenv("LOGLEVEL", "INFO")
+LOGLEVEL = getattr(logging, os.getenv("LOGLEVEL", "INFO"), logging.INFO)
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -15,7 +15,6 @@ def get_logger(name: str) -> logging.Logger:
     if not logger.handlers:
         file_handler = logging.FileHandler(LOG_FILE)
         console_handler = logging.StreamHandler()
-
         file_handler.setLevel(logging.WARNING)
         console_handler.setLevel(LOGLEVEL)
 

@@ -46,6 +46,8 @@ def test_v2_endpoints(client: TestClient):
 
     search = MovieSearch(title="Test", n_results=1)
     response = client.post("/v2/search", json=search.model_dump())
+    assert response.status_code == 200
+    results = response.json()
     assert results[0]["title"] == "Test Movie"
 
     # Should raise validation error
