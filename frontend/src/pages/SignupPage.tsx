@@ -30,8 +30,12 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-card via-background to-background">
-      <Card className="w-full max-w-sm border-border/50 bg-card/80 backdrop-blur-sm">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <div className="absolute inset-0 poster-wall" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-background/90 to-background" />
+      <div className="absolute inset-0 vignette" />
+      <div className="absolute inset-0 film-grain" />
+      <Card className="relative z-10 w-full max-w-sm border-border/50 bg-card/90 backdrop-blur-md shadow-2xl shadow-black/50">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto mb-2">
             <img src="/tmdb/tmdb-logo-short.svg" alt="TMDB" className="h-7 mx-auto" />

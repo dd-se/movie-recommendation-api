@@ -35,13 +35,15 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Hero */}
-      <div className="relative h-[320px] flex items-end bg-gradient-to-b from-primary/5 via-background to-background">
+      <div className="relative h-[320px] flex items-end overflow-hidden">
+        <div className="absolute inset-0 hero-cinematic" />
+        <div className="absolute inset-0 film-grain" />
         <div className="relative px-8 pb-8 max-w-6xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-2">
-            <Compass className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Explore</h1>
+            <Compass className="w-8 h-8 text-primary drop-shadow-lg" />
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-lg">Explore</h1>
           </div>
-          <p className="text-lg text-muted-foreground">Inspiration for your next movie night</p>
+          <p className="text-lg text-muted-foreground drop-shadow-sm">Inspiration for your next movie night</p>
         </div>
       </div>
 

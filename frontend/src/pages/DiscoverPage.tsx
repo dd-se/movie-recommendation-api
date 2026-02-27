@@ -125,14 +125,15 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen">
       {/* Hero section */}
-      <div className="relative h-[420px] flex items-end bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
+      <div className="relative h-[420px] flex items-end overflow-hidden">
+        <div className="absolute inset-0 hero-cinematic" />
+        <div className="absolute inset-0 film-grain" />
         <div className="relative px-8 pb-8 max-w-5xl w-full mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2 drop-shadow-lg">
             Discover Movies
           </h1>
           <div className="flex items-center gap-4 flex-wrap">
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground drop-shadow-sm">
               Find your next favorite film with powerful filters and AI-powered semantic search.
             </p>
             <PoweredByTmdb />
