@@ -51,3 +51,5 @@ cd frontend && npm run dev
 - `uv` is the backend package manager (lockfile: `uv.lock`). Use `uv sync --group prod --group test` for full dev setup.
 - Python version pinned to 3.12 in `.python-version`.
 - The frontend uses Tailwind CSS v4 (`@tailwindcss/vite` plugin) — no `tailwind.config.js` needed.
+- Semantic search (description-based filters) requires the vector store to be populated. Without data, the backend returns 500 for description queries. The frontend handles this gracefully with a "Request failed" message.
+- The `.env` file needs `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_DAYS`, `TMDB_API_KEY`, `LOGLEVEL`, `USE_CUDA`. See `README.md`.
