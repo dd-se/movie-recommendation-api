@@ -15,7 +15,12 @@ async function request<T>(
     },
   });
 
-  const data = await res.json();
+  let data: Record<string, unknown>;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Request failed (${res.status})`);
+  }
 
   if (!res.ok) {
     const msg =
