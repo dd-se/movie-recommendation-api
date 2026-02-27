@@ -5,7 +5,7 @@
 
 ## About
 
-A FastAPI-based API for discovering and recommending movies. It integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search and includes user authentication, recommendation tracking, and scheduled background jobs for data processing.
+A full-stack movie recommendation application. The **backend** is a FastAPI API that integrates with The Movie Database (TMDB) to fetch movie data, uses vector embeddings for semantic search, and includes user authentication, recommendation tracking, and scheduled background jobs. The **frontend** is a React single-page application with a Netflix-inspired dark UI built with shadcn/ui.
 
 ## Features
 
@@ -15,18 +15,30 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
 - **TMDB Integration**: Fetches movie data (now playing, top-rated, popular) from TMDB and stores it in a SQLite database.
 - **Background Scheduling**: APScheduler jobs to periodically fetch new movies from TMDB, refresh existing data, preprocess descriptions, and update the vector store.
 - **Database Management**: SQLite backend with SQLAlchemy ORM for storing users, movies, recommendations, and processing queues.
-- **Request Builder**: Easily test API endpoints directly in your browser at `http://127.0.0.1:8000`.
+- **Modern Frontend**: Netflix-inspired React app with dark theme, shadcn/ui components, movie discovery, genre browsing, and user profile management.
+- **Legacy Request Builder**: A lightweight HTML client served by the backend at `http://127.0.0.1:8000`.
 
 ## Stack
 
-- **Framework**: FastAPI
+### Backend
+- **Framework**: FastAPI (Python 3.11+)
 - **Database**: SQLite with SQLAlchemy
 - **Authentication**: JWT (PyJWT) with bcrypt for password hashing
 - **Semantic Search**: ChromaDB with Sentence Transformers (`nomic-ai/nomic-embed-text-v1.5`)
 - **Scheduling**: APScheduler
 - **External API**: TMDB for movie data
 
+### Frontend
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite
+- **UI Library**: [shadcn/ui](https://ui.shadcn.com/) (built on Radix UI + Tailwind CSS v4)
+- **Routing**: React Router
+- **Icons**: Lucide React
+
 ## Installation
+
+### Backend
+
 - Python 3.11+
 - Install dependencies with pip or uv:
     ```bash
@@ -41,6 +53,11 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
     uv sync --group test
     ```
 
+- Create required directories:
+    ```bash
+    mkdir -p data/db data/vector_store logs
+    ```
+
 - **Configure Environment Variables**:
    Create a `.env` file in the root directory with the following:
    ```
@@ -52,19 +69,52 @@ A FastAPI-based API for discovering and recommending movies. It integrates with 
    ```
    Note: The app loads `.env` automatically via `dotenv`.
 
-  ### Populate the database with `app_ctl.py` (Optional)
-    - Populates the database with movie data from TMDB's daily ID exports. Read below on how to.
+### Frontend
+
+- Node.js 20+
+- Install dependencies:
+    ```bash
+    cd frontend
+    npm install
+    ```
+
+### Populate the database with `app_ctl.py` (Optional)
+  - Populates the database with movie data from TMDB's daily ID exports. Read below on how to.
 
 ## Usage
 
-- Run the FastAPI server using Uvicorn:
-    ```bash
-    uvicorn src.api.main:app [--reload]
-    ```
+### Running the Backend
 
-    The movie request builder will be available at `http://127.0.0.1:8000`, served via static files from `src/api/html/`.
+Run the FastAPI server using Uvicorn:
+```bash
+uvicorn src.api.main:app [--reload]
+```
 
-    The documentation endpoint will be available at  `http://127.0.0.1:8000/docs`.
+- Legacy request builder: `http://127.0.0.1:8000`
+- API documentation: `http://127.0.0.1:8000/docs`
+- Health check: `GET http://127.0.0.1:8000/api/health`
+
+### Running the Frontend
+
+Start the backend first, then in a separate terminal:
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173`. It proxies all API calls (`/auth`, `/v1`, `/v2`, `/admin`, `/api`) to the backend at `http://127.0.0.1:8000` via the Vite dev server.
+
+### Running Both (Development)
+
+```bash
+# Terminal 1 — Backend
+uvicorn src.api.main:app --reload
+
+# Terminal 2 — Frontend
+cd frontend && npm run dev
+```
+
+Open `http://localhost:5173` to use the full application.
 
 ### Filtering Movies
 
@@ -143,6 +193,7 @@ The QueueStatus enum, defined in src/storage/db.py, represents the states of mov
 
 - TMDB for movie data.
 - FastAPI, SQLAlchemy, ChromaDB etc.
+- [shadcn/ui](https://ui.shadcn.com/) for the frontend component library.
 
 ## License
 
