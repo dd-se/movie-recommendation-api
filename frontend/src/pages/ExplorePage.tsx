@@ -1,8 +1,9 @@
-import { Compass, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
+import { Compass, ArrowRight, Sparkles, Shield, Zap, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { TmdbLogo, TmdbAttribution } from '@/components/TmdbBrand';
 
 const GENRES = [
   { name: 'Action', emoji: '💥', color: 'from-red-500/20 to-transparent' },
@@ -84,6 +85,37 @@ export default function ExplorePage() {
               </Link>
             ))}
           </div>
+        </section>
+
+        {/* TMDB data source */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Database className="w-5 h-5 text-[#01b4e4]" /> Data Source
+          </h2>
+          <Card className="border-border/30 bg-card overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-6">
+                <div className="shrink-0">
+                  <TmdbLogo variant="long" className="h-6 opacity-90" />
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    All movie data — titles, overviews, posters, ratings, cast, and more — is sourced from
+                    The Movie Database (TMDB), the community-built movie and TV database.
+                  </p>
+                  <TmdbAttribution />
+                </div>
+                <a
+                  href="https://www.themoviedb.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 px-4 py-2 rounded-md text-sm font-medium bg-[#01b4e4]/10 text-[#01b4e4] hover:bg-[#01b4e4]/20 transition-colors"
+                >
+                  Visit TMDB →
+                </a>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* API features */}

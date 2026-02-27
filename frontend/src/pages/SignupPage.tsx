@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clapperboard, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +33,8 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-card via-background to-background">
       <Card className="w-full max-w-sm border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-            <Clapperboard className="w-6 h-6 text-primary" />
+          <div className="mx-auto mb-2">
+            <img src="/tmdb/tmdb-logo-short.svg" alt="TMDB" className="h-7 mx-auto" />
           </div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>Start discovering great movies</CardDescription>

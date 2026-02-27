@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Endpoint, Movie, MovieFilter } from '@/types';
 import MovieCard from '@/components/MovieCard';
 import MovieDetail from '@/components/MovieDetail';
+import { PoweredByTmdb } from '@/components/TmdbBrand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,9 +86,12 @@ export default function DiscoverPage() {
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">
             Discover Movies
           </h1>
-          <p className="text-lg text-muted-foreground max-w-xl">
-            Find your next favorite film with powerful filters and AI-powered semantic search.
-          </p>
+          <div className="flex items-center gap-4 flex-wrap">
+            <p className="text-lg text-muted-foreground">
+              Find your next favorite film with powerful filters and AI-powered semantic search.
+            </p>
+            <PoweredByTmdb />
+          </div>
         </div>
       </div>
 

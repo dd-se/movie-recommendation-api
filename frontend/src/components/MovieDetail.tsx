@@ -1,10 +1,11 @@
-import { Star, Clock, Calendar, TrendingUp, Users, ExternalLink } from 'lucide-react';
+import { Star, Clock, Calendar, TrendingUp, Users } from 'lucide-react';
 import type { Movie } from '@/types';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { TmdbLogo } from '@/components/TmdbBrand';
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w780';
 
@@ -121,12 +122,15 @@ export default function MovieDetail({ movie, open, onClose }: Props) {
           )}
 
           {/* TMDB link */}
-          <Button variant="outline" size="sm" asChild className="gap-2">
-            <a href={`https://www.themoviedb.org/movie/${movie.tmdb_id}`} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-3.5 h-3.5" />
-              View on TMDB
-            </a>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" asChild className="gap-2">
+              <a href={`https://www.themoviedb.org/movie/${movie.tmdb_id}`} target="_blank" rel="noopener noreferrer">
+                <img src="/tmdb/tmdb-logo-short.svg" alt="TMDB" className="h-2.5" />
+                View on TMDB
+              </a>
+            </Button>
+            <TmdbLogo variant="short" className="h-2.5 opacity-40" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

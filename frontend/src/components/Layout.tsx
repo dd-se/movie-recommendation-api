@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, LogOut, User, Clapperboard, Compass } from 'lucide-react';
+import { Search, LogOut, User, Compass } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { TmdbLogo, TmdbAttribution } from '@/components/TmdbBrand';
+import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 
 export default function Layout() {
@@ -46,8 +48,7 @@ export default function Layout() {
         <div className="flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
-              <Clapperboard className="w-7 h-7 text-primary" />
-              <span className="text-xl font-bold tracking-tight text-white">MovieRec</span>
+              <TmdbLogo variant="short" className="h-4" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-1">
@@ -111,6 +112,33 @@ export default function Layout() {
       {/* Main content */}
       <main id="main-scroll" className="flex-1 overflow-y-auto pt-16">
         <Outlet />
+
+        {/* Footer with TMDB attribution */}
+        <footer className="border-t border-border/50 mt-12">
+          <div className="max-w-6xl mx-auto px-8 py-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <TmdbLogo variant="long" className="h-4 opacity-70 hover:opacity-100 transition-opacity" />
+                </div>
+                <TmdbAttribution />
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <a href="/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  API Docs
+                </a>
+                <Separator orientation="vertical" className="h-3" />
+                <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  TMDB
+                </a>
+                <Separator orientation="vertical" className="h-3" />
+                <a href="https://developer.themoviedb.org/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  TMDB API
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
