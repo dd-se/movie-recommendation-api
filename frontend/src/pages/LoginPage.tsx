@@ -30,11 +30,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      <div className="absolute inset-0 poster-wall" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-background/90 to-background" />
-      <div className="absolute inset-0 vignette" />
-      <div className="absolute inset-0 film-grain" />
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden cinema-bg">
+      <div className="absolute inset-0 cinema-overlay-heavy" />
       <Card className="relative z-10 w-full max-w-sm border-border/50 bg-card/90 backdrop-blur-md shadow-2xl shadow-black/50">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto mb-2">

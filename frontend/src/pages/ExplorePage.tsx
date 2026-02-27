@@ -35,9 +35,8 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Hero */}
-      <div className="relative h-[320px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 hero-cinematic" />
-        <div className="absolute inset-0 film-grain" />
+      <div className="relative h-[320px] flex items-end overflow-hidden cinema-bg">
+        <div className="absolute inset-0 cinema-overlay-hero" />
         <div className="relative px-8 pb-8 max-w-6xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-2">
             <Compass className="w-8 h-8 text-primary drop-shadow-lg" />

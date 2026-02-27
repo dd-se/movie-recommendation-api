@@ -42,7 +42,8 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Hero */}
-      <div className="relative h-[280px] flex items-end bg-gradient-to-b from-primary/5 via-background to-background">
+      <div className="relative h-[280px] flex items-end overflow-hidden cinema-bg">
+        <div className="absolute inset-0 cinema-overlay-hero" />
         <div className="relative px-8 pb-8 max-w-3xl mx-auto w-full flex items-end gap-5">
           <Avatar className="w-20 h-20 rounded-xl border-2 border-primary/30">
             <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-3xl font-bold">

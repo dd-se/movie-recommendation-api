@@ -113,52 +113,24 @@
   scrollbar-width: none;
 }
 
-/* Netflix-style poster wall for auth pages */
-.poster-wall {
-  --cell: 140px;
+/* Cinema background image — shared across hero sections and auth pages */
+.cinema-bg {
+  background: url('/bg/cinema.jpg') center/cover no-repeat fixed;
+}
+
+/* Heavy overlay for full-page auth screens (login/signup) — keeps form readable */
+.cinema-overlay-heavy {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.07 0 0 / 75%) 0%,
+    oklch(0.07 0 0 / 85%) 50%,
+    oklch(0.07 0 0 / 95%) 100%
+  );
+}
+
+/* Hero overlay — lets the image peek through at top, fades to solid at bottom */
+.cinema-overlay-hero {
   background:
-    repeating-linear-gradient(
-      90deg,
-      oklch(1 0 0 / 3%) 0px, oklch(1 0 0 / 3%) 1px, transparent 1px, transparent var(--cell)
-    ),
-    repeating-linear-gradient(
-      0deg,
-      oklch(1 0 0 / 3%) 0px, oklch(1 0 0 / 3%) 1px, transparent 1px, transparent calc(var(--cell) * 1.5)
-    );
-  background-size: var(--cell) calc(var(--cell) * 1.5);
-  animation: poster-drift 30s linear infinite;
-}
-@keyframes poster-drift {
-  from { background-position: 0 0; }
-  to   { background-position: var(--cell) calc(var(--cell) * 1.5); }
-}
-
-/* Film grain texture overlay */
-.film-grain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.035;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-}
-
-/* Vignette effect */
-.vignette::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 50%, oklch(0.07 0 0) 100%);
-}
-
-/* Cinematic hero gradient */
-.hero-cinematic {
-  background:
-    linear-gradient(to bottom, oklch(0.07 0 0 / 20%) 0%, transparent 30%, transparent 60%, oklch(0.07 0 0) 100%),
-    linear-gradient(to right, oklch(0.07 0 0 / 60%) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 20%, oklch(0.577 0.245 27.325 / 8%) 0%, transparent 60%),
-    radial-gradient(ellipse at 30% 80%, oklch(0.45 0.15 250 / 5%) 0%, transparent 50%);
+    linear-gradient(to bottom, oklch(0.07 0 0 / 30%) 0%, oklch(0.07 0 0 / 50%) 40%, oklch(0.07 0 0) 100%),
+    linear-gradient(to right, oklch(0.07 0 0 / 50%) 0%, transparent 60%);
 }

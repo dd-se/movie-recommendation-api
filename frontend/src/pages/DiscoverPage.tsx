@@ -125,9 +125,8 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen">
       {/* Hero section */}
-      <div className="relative h-[420px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 hero-cinematic" />
-        <div className="absolute inset-0 film-grain" />
+      <div className="relative h-[420px] flex items-end overflow-hidden cinema-bg">
+        <div className="absolute inset-0 cinema-overlay-hero" />
         <div className="relative px-8 pb-8 max-w-5xl w-full mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2 drop-shadow-lg">
             Discover Movies
