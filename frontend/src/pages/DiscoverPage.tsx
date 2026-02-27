@@ -1,10 +1,15 @@
 import { useCallback, useState } from 'react';
-import { Search, SlidersHorizontal, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import { api } from '../api';
-import { useAuth } from '../hooks/useAuth';
-import type { Endpoint, Movie, MovieFilter } from '../types';
-import MovieCard from '../components/MovieCard';
-import MovieDetail from '../components/MovieDetail';
+import { Search, SlidersHorizontal, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { api } from '@/api';
+import { useAuth } from '@/hooks/useAuth';
+import type { Endpoint, Movie, MovieFilter } from '@/types';
+import MovieCard from '@/components/MovieCard';
+import MovieDetail from '@/components/MovieDetail';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DiscoverPage() {
   const { token, isAuthenticated } = useAuth();
@@ -16,7 +21,6 @@ export default function DiscoverPage() {
   const [genres, setGenres] = useState('');
   const [nResults, setNResults] = useState(6);
 
-  // Advanced filters
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [voteMin, setVoteMin] = useState('');
   const [voteCountMin, setVoteCountMin] = useState('');
@@ -72,213 +76,154 @@ export default function DiscoverPage() {
     }
   }, [title, description, cast, genres, keywords, countries, languages, voteMin, voteCountMin, popularityMin, releaseDateFrom, releaseDateTo, runtimeMin, runtimeMax, endpoint, nResults, token]);
 
-  const v2Available = isAuthenticated;
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
-          <Sparkles className="w-8 h-8 text-accent-hover" />
-          Discover Movies
-        </h1>
-        <p className="text-text-muted mt-1">Find your next favorite movie with powerful filters and semantic search</p>
+    <div className="min-h-screen">
+      {/* Hero section */}
+      <div className="relative h-[420px] flex items-end bg-gradient-to-b from-primary/5 via-background to-background">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
+        <div className="relative px-8 pb-8 max-w-5xl w-full mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">
+            Discover Movies
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-xl">
+            Find your next favorite film with powerful filters and AI-powered semantic search.
+          </p>
+        </div>
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="bg-surface-secondary rounded-xl border border-border p-5 mb-6">
-        {/* Endpoint selector */}
-        <div className="flex flex-wrap gap-2 mb-5">
-          {([
-            ['/v1/movie', 'Recommend', false],
-            ['/v2/movie', 'Smart Recommend', true],
-            ['/v2/search', 'Semantic Search', true],
-          ] as [Endpoint, string, boolean][]).map(([ep, label, authRequired]) => (
-            <button
-              key={ep}
-              type="button"
-              onClick={() => setEndpoint(ep)}
-              disabled={authRequired && !v2Available}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                endpoint === ep
-                  ? 'bg-accent text-white'
-                  : authRequired && !v2Available
-                    ? 'bg-surface-tertiary/50 text-text-muted cursor-not-allowed'
-                    : 'bg-surface-tertiary text-text-secondary hover:bg-surface-hover hover:text-text-primary'
-              }`}
-            >
-              {label}
-              {authRequired && !v2Available && (
-                <span className="ml-1.5 text-[10px]">🔒</span>
-              )}
-            </button>
-          ))}
-        </div>
+      {/* Search section */}
+      <div className="px-8 max-w-5xl mx-auto -mt-4">
+        <form onSubmit={handleSearch} className="space-y-4">
+          {/* Endpoint tabs */}
+          <Tabs value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
+            <TabsList className="bg-secondary/50">
+              <TabsTrigger value="/v1/movie">Recommend</TabsTrigger>
+              <TabsTrigger value="/v2/movie" disabled={!isAuthenticated}>
+                Smart Recommend {!isAuthenticated && '🔒'}
+              </TabsTrigger>
+              <TabsTrigger value="/v2/search" disabled={!isAuthenticated}>
+                Semantic Search {!isAuthenticated && '🔒'}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        {/* Main inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-xs font-medium text-text-muted mb-1.5">Title</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Inception"
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary placeholder-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-text-muted mb-1.5">Genres</label>
-            <input
-              value={genres}
-              onChange={(e) => setGenres(e.target.value)}
-              placeholder="Action, Thriller"
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary placeholder-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-text-muted mb-1.5">Cast</label>
-            <input
-              value={cast}
-              onChange={(e) => setCast(e.target.value)}
-              placeholder="Brad Pitt, Edward Norton"
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary placeholder-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-            />
-          </div>
-          {endpoint === '/v2/search' ? (
-            <div>
-              <label className="block text-xs font-medium text-text-muted mb-1.5">Max Results</label>
-              <input
-                type="number"
-                min={1}
-                max={21}
-                value={nResults}
-                onChange={(e) => setNResults(parseInt(e.target.value) || 6)}
-                className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-              />
+          {/* Main filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Title</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Inception" className="bg-card" />
             </div>
-          ) : (
-            <div />
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Genres</Label>
+              <Input value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="Action, Thriller" className="bg-card" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{endpoint === '/v2/search' ? 'Max Results' : 'Cast'}</Label>
+              {endpoint === '/v2/search' ? (
+                <Input type="number" min={1} max={21} value={nResults} onChange={(e) => setNResults(parseInt(e.target.value) || 6)} className="bg-card" />
+              ) : (
+                <Input value={cast} onChange={(e) => setCast(e.target.value)} placeholder="Brad Pitt, Edward Norton" className="bg-card" />
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Description (Semantic Search)</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A computer hacker who discovers reality is a simulation..."
+              rows={2}
+              className="bg-card resize-none"
+            />
+          </div>
+
+          {/* Advanced toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Advanced Filters
+            {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+
+          {showAdvanced && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-lg bg-card border border-border/50">
+              <FilterInput label="Min Vote Avg" value={voteMin} onChange={setVoteMin} placeholder="6.5" type="number" />
+              <FilterInput label="Min Vote Count" value={voteCountMin} onChange={setVoteCountMin} placeholder="100" type="number" />
+              <FilterInput label="Min Popularity" value={popularityMin} onChange={setPopularityMin} placeholder="10" type="number" />
+              <FilterInput label="Released After" value={releaseDateFrom} onChange={setReleaseDateFrom} placeholder="YYYY-MM-DD" />
+              <FilterInput label="Released Before" value={releaseDateTo} onChange={setReleaseDateTo} placeholder="YYYY-MM-DD" />
+              <FilterInput label="Min Runtime" value={runtimeMin} onChange={setRuntimeMin} placeholder="90" type="number" />
+              <FilterInput label="Max Runtime" value={runtimeMax} onChange={setRuntimeMax} placeholder="180" type="number" />
+              <FilterInput label="Keywords" value={keywords} onChange={setKeywords} placeholder="hacker, dystopia" />
+              <FilterInput label="Countries" value={countries} onChange={setCountries} placeholder="United States" />
+              <FilterInput label="Languages" value={languages} onChange={setLanguages} placeholder="English" />
+              {endpoint === '/v2/search' && (
+                <FilterInput label="Cast" value={cast} onChange={setCast} placeholder="Brad Pitt" />
+              )}
+            </div>
           )}
-        </div>
 
-        {/* Description / semantic search */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-text-muted mb-1.5">Description (Semantic Search)</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="A computer hacker who discovers reality is a simulation..."
-            rows={2}
-            className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary placeholder-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none"
-          />
-        </div>
+          <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 gap-2">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {loading ? 'Searching...' : 'Search Movies'}
+          </Button>
+        </form>
 
-        {/* Advanced filters toggle */}
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors mb-4"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Advanced Filters
-          {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        </button>
-
-        {showAdvanced && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4 p-4 rounded-lg bg-surface/50 border border-border/50">
-            <FilterInput label="Min Vote Avg" value={voteMin} onChange={setVoteMin} placeholder="6.5" type="number" step="0.1" min="0" max="10" />
-            <FilterInput label="Min Vote Count" value={voteCountMin} onChange={setVoteCountMin} placeholder="100" type="number" min="0" />
-            <FilterInput label="Min Popularity" value={popularityMin} onChange={setPopularityMin} placeholder="10" type="number" step="0.1" min="0" />
-            <FilterInput label="Released After" value={releaseDateFrom} onChange={setReleaseDateFrom} placeholder="YYYY-MM-DD" />
-            <FilterInput label="Released Before" value={releaseDateTo} onChange={setReleaseDateTo} placeholder="YYYY-MM-DD" />
-            <FilterInput label="Min Runtime (min)" value={runtimeMin} onChange={setRuntimeMin} placeholder="90" type="number" min="0" />
-            <FilterInput label="Max Runtime (min)" value={runtimeMax} onChange={setRuntimeMax} placeholder="180" type="number" min="0" />
-            <FilterInput label="Keywords" value={keywords} onChange={setKeywords} placeholder="hacker, dystopia" />
-            <FilterInput label="Countries" value={countries} onChange={setCountries} placeholder="United States" />
-            <FilterInput label="Languages" value={languages} onChange={setLanguages} placeholder="English" />
+        {/* Error */}
+        {error && (
+          <div className="mt-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+            {error}
           </div>
         )}
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full md:w-auto px-8 py-2.5 rounded-lg bg-accent text-white font-semibold text-sm hover:bg-accent-hover disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
+        {/* Results */}
+        <div className="mt-8 pb-12">
+          {movies.length > 0 ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Searching...
+              <p className="text-sm text-muted-foreground mb-4">
+                <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {movies.map((m) => (
+                  <MovieCard key={m.tmdb_id} movie={m} onInfo={() => setSelectedMovie(m)} />
+                ))}
+              </div>
             </>
-          ) : (
-            <>
-              <Search className="w-4 h-4" />
-              Search Movies
-            </>
-          )}
-        </button>
-      </form>
-
-      {/* Error */}
-      {error && (
-        <div className="p-4 rounded-xl bg-error/10 border border-error/20 text-error text-sm mb-6">
-          {error}
+          ) : searched && !loading && !error ? (
+            <div className="text-center py-20">
+              <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-1">No movies found</h3>
+              <p className="text-sm text-muted-foreground">Try adjusting your search filters</p>
+            </div>
+          ) : !searched ? (
+            <div className="text-center py-20">
+              <div className="text-5xl mb-4">🎬</div>
+              <h3 className="text-lg font-semibold mb-1">Ready to discover</h3>
+              <p className="text-sm text-muted-foreground">Use the search form above to find your next favorite movie</p>
+            </div>
+          ) : null}
         </div>
-      )}
+      </div>
 
-      {/* Results */}
-      {movies.length > 0 ? (
-        <>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-text-muted">
-              Found <span className="text-text-primary font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {movies.map((m) => (
-              <MovieCard key={m.tmdb_id} movie={m} onClick={() => setSelectedMovie(m)} />
-            ))}
-          </div>
-        </>
-      ) : searched && !loading && !error ? (
-        <div className="text-center py-20">
-          <Search className="w-12 h-12 text-text-muted mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-text-primary mb-1">No movies found</h3>
-          <p className="text-sm text-text-muted">Try adjusting your search filters</p>
-        </div>
-      ) : !searched ? (
-        <div className="text-center py-20">
-          <Sparkles className="w-12 h-12 text-accent/40 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-text-primary mb-1">Ready to discover</h3>
-          <p className="text-sm text-text-muted">Use the search form above to find movie recommendations</p>
-        </div>
-      ) : null}
-
-      {/* Detail modal */}
-      {selectedMovie && (
-        <MovieDetail movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
-      )}
+      <MovieDetail movie={selectedMovie} open={!!selectedMovie} onClose={() => setSelectedMovie(null)} />
     </div>
   );
 }
 
 function FilterInput({
-  label, value, onChange, placeholder, type = 'text', ...rest
+  label, value, onChange, placeholder, type = 'text',
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder: string;
-  type?: string; [k: string]: unknown;
+  label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string;
 }) {
   return (
-    <div>
-      <label className="block text-[11px] font-medium text-text-muted mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text-primary placeholder-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-        {...rest}
-      />
+    <div className="space-y-1">
+      <Label className="text-[11px] text-muted-foreground">{label}</Label>
+      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-background/50 h-8 text-xs" />
     </div>
   );
 }
