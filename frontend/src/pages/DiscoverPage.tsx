@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DiscoverPage() {
   const { token, isAuthenticated } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [endpoint, setEndpoint] = useState<Endpoint>('/v1/movie');
   const [title, setTitle] = useState('');
@@ -41,6 +43,24 @@ export default function DiscoverPage() {
   const [searched, setSearched] = useState(false);
 
   const splitCsv = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
+
+  const pendingSearchRef = useRef(false);
+
+  useEffect(() => {
+    const qGenres = searchParams.get('genres');
+    const qDescription = searchParams.get('description');
+    const qTitle = searchParams.get('title');
+
+    let hasParams = false;
+    if (qGenres) { setGenres(qGenres); hasParams = true; }
+    if (qDescription) { setDescription(qDescription); hasParams = true; }
+    if (qTitle) { setTitle(qTitle); hasParams = true; }
+
+    if (hasParams) {
+      setSearchParams({}, { replace: true });
+      pendingSearchRef.current = true;
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSearch = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -70,12 +90,24 @@ export default function DiscoverPage() {
       const data = await api.getMovies(endpoint, filter, needsAuth ? token ?? undefined : undefined);
       setMovies(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
-      setMovies([]);
+      const message = err instanceof Error ? err.message : 'Search failed';
+      if (message === 'Not found') {
+        setMovies([]);
+      } else {
+        setError(message);
+        setMovies([]);
+      }
     } finally {
       setLoading(false);
     }
   }, [title, description, cast, genres, keywords, countries, languages, voteMin, voteCountMin, popularityMin, releaseDateFrom, releaseDateTo, runtimeMin, runtimeMax, endpoint, nResults, token]);
+
+  useEffect(() => {
+    if (pendingSearchRef.current) {
+      pendingSearchRef.current = false;
+      handleSearch();
+    }
+  }, [handleSearch]);
 
   return (
     <div className="min-h-screen">

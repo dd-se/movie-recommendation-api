@@ -25,7 +25,8 @@ export default function ProfilePage() {
       const res = await api.forgetRecommendations(token);
       setMessage(res.detail);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to clear history');
+      const msg = err instanceof Error ? err.message : 'Failed to clear history';
+      setMessage(msg === 'Not found' ? 'No recommendation history to clear.' : msg);
     } finally {
       setClearing(false);
     }
