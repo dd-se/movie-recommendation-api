@@ -37,7 +37,7 @@ cd frontend && npm run dev
 ### Running tests
 
 - **Backend:** `uv run pytest` — fully self-contained (in-memory SQLite, mocked TMDB, mocked scheduler)
-- **Frontend:** `cd frontend && npm run lint && npx tsc --noEmit && npm run build`
+- **Frontend:** `cd frontend && npm run lint && npx tsc -b --noEmit && npm run build`
 
 ### Linting
 
