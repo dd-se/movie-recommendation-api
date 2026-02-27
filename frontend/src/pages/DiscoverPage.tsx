@@ -44,6 +44,7 @@ export default function DiscoverPage() {
 
   const splitCsv = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
 
+  const urlOverridesRef = useRef<{ title?: string; description?: string; genres?: string } | null>(null);
   const pendingSearchRef = useRef(false);
 
   useEffect(() => {
@@ -58,6 +59,11 @@ export default function DiscoverPage() {
 
     if (hasParams) {
       setSearchParams({}, { replace: true });
+      urlOverridesRef.current = {
+        title: qTitle ?? undefined,
+        description: qDescription ?? undefined,
+        genres: qGenres ?? undefined,
+      };
       pendingSearchRef.current = true;
     }
   }, [searchParams, setSearchParams]);
@@ -68,11 +74,18 @@ export default function DiscoverPage() {
     setLoading(true);
     setSearched(true);
 
+    const overrides = urlOverridesRef.current;
+    urlOverridesRef.current = null;
+
+    const curTitle = overrides?.title ?? title;
+    const curDescription = overrides?.description ?? description;
+    const curGenres = overrides?.genres ?? genres;
+
     const filter: MovieFilter = {};
-    if (title) filter.title = title;
-    if (description) filter.description = description;
+    if (curTitle) filter.title = curTitle;
+    if (curDescription) filter.description = curDescription;
     if (cast) filter.cast = splitCsv(cast);
-    if (genres) filter.genres = splitCsv(genres);
+    if (curGenres) filter.genres = splitCsv(curGenres);
     if (keywords) filter.keywords = splitCsv(keywords);
     if (countries) filter.production_countries = splitCsv(countries);
     if (languages) filter.spoken_languages = splitCsv(languages);
