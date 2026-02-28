@@ -23,9 +23,19 @@ export default function Layout() {
   useEffect(() => {
     const el = document.getElementById('main-scroll');
     if (!el) return;
-    const handler = () => setScrolled(el.scrollTop > 20);
-    el.addEventListener('scroll', handler);
-    return () => el.removeEventListener('scroll', handler);
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        setScrolled(el.scrollTop > 10);
+        rafId = 0;
+      });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -39,13 +49,10 @@ export default function Layout() {
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Netflix-style top nav */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-xl border-b ${
-          scrolled
-            ? 'bg-background/70 border-border/30 shadow-lg shadow-black/30'
-            : 'bg-background/40 border-transparent'
-        }`}
+        className="glass-nav fixed top-0 left-0 right-0 z-50"
+        data-scrolled={scrolled}
       >
-        <div className="flex items-center justify-between px-6 h-16">
+        <div className="relative z-10 flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
               <TmdbLogo variant="short" className="h-4" />
@@ -152,10 +159,10 @@ function NavLink({
   return (
     <Link
       to={to}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
         active
-          ? 'text-white'
-          : 'text-muted-foreground hover:text-white'
+          ? 'text-foreground bg-white/10'
+          : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
       }`}
     >
       {icon}
