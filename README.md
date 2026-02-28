@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
+  <img src="backend/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
 </p>
 <p align="center"><em>Find the right movie, instantly.</em></p>
 
