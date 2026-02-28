@@ -16,9 +16,9 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.api.auth import get_current_active_user, get_current_user
-from src.api.main import app
-from src.storage.db import Base, Movie, User
+from backend.api.auth import get_current_active_user, get_current_user
+from backend.api.main import app
+from backend.storage.db import Base, Movie, User
 
 TEST_SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 test_engine = create_engine(TEST_SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -50,8 +50,8 @@ def mock_call_external_api(url: str, params: dict):
 
 @pytest.fixture(scope="function")
 def in_memory_test_db(monkeypatch):
-    monkeypatch.setattr("src.storage.db.engine", test_engine)
-    monkeypatch.setattr("src.storage.db.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("backend.storage.db.engine", test_engine)
+    monkeypatch.setattr("backend.storage.db.SessionLocal", TestingSessionLocal)
 
     Base.metadata.create_all(bind=test_engine)
 
@@ -102,13 +102,13 @@ def in_memory_test_db(monkeypatch):
 
 @pytest.fixture(scope="function")
 def mock_external_api_requests(monkeypatch):
-    monkeypatch.setattr("src.external.tmdb.call_external_api", mock_call_external_api)
+    monkeypatch.setattr("backend.external.tmdb.call_external_api", mock_call_external_api)
 
 
 @pytest.fixture(scope="function")
 def mock_scheduler(monkeypatch):
     dummy_scheduler = Mock()
-    monkeypatch.setattr("src.scheduler.background_scheduler", dummy_scheduler)
+    monkeypatch.setattr("backend.scheduler.background_scheduler", dummy_scheduler)
 
 
 async def override_get_current_user():

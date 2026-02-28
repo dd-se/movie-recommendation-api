@@ -2,8 +2,8 @@
 
 import argparse
 
-from src.populate_db import populate_db
-from src.storage.db import QueueStatus, backup_db, update_queue_status, update_user
+from backend.populate_db import populate_db
+from backend.storage.db import QueueStatus, backup_db, update_queue_status, update_user
 
 
 def parse_args():
