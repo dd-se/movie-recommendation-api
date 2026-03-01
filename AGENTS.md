@@ -8,7 +8,7 @@ This repo has two services:
 
 | Service | Stack | Location | Dev Server |
 |---|---|---|---|
-| **Backend API** | FastAPI + SQLite + ChromaDB | `/` (root) | `uv run uvicorn backend.api.main:app --reload` → `:8000` |
+| **Backend API** | FastAPI + SQLite + ChromaDB | `/` (root) | `uv run uvicorn backend.app:app --reload` → `:8000` |
 | **Frontend** | React + TypeScript + Vite + Tailwind CSS | `frontend/` | `npm run dev` → `:5173` (proxies API to `:8000`) |
 
 See `README.md` for full backend details and `frontend/package.json` for frontend scripts.
@@ -16,7 +16,7 @@ See `README.md` for full backend details and `frontend/package.json` for fronten
 ### Running the backend
 
 ```bash
-uv run uvicorn backend.api.main:app --reload
+uv run uvicorn backend.app:app --reload
 ```
 
 - Legacy request builder: `http://127.0.0.1:8000`
