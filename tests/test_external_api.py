@@ -1,7 +1,7 @@
 import pytest
 from requests import RequestException
 
-from src.external.tmdb import (
+from backend.external.tmdb import (
     fetch_movie_details,
     fetch_now_playing_tmdb_ids,
     fetch_popular_tmdb_ids,

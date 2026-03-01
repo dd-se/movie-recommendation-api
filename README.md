@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
+  <img src="backend/api/html/img/logo.svg" alt="The Movie Database Logo" width="512">
 </p>
 <p align="center"><em>Find the right movie, instantly.</em></p>
 
@@ -87,7 +87,7 @@ A full-stack movie recommendation application. The **backend** is a FastAPI API 
 
 Run the FastAPI server using Uvicorn:
 ```bash
-uvicorn src.api.main:app [--reload]
+uvicorn backend.api.main:app [--reload]
 ```
 
 - Legacy request builder: `http://127.0.0.1:8000`
@@ -108,7 +108,7 @@ The frontend will be available at `http://localhost:5173`. It proxies all API ca
 
 ```bash
 # Terminal 1 — Backend
-uvicorn src.api.main:app --reload
+uvicorn backend.api.main:app --reload
 
 # Terminal 2 — Frontend
 cd frontend && npm run dev

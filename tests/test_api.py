@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from src.validation import MovieFilter, MovieSearch, UserCreate
+from backend.validation import MovieFilter, MovieSearch, UserCreate
 
 
 # API endpoint tests

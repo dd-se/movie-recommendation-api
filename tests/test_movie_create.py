@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from src.validation import MovieCreate
+from backend.validation import MovieCreate
 
 
 def test_valid_movie_create(example_response):
