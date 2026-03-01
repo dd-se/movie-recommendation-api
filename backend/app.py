@@ -5,23 +5,44 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .core.config import CORS_ORIGINS
-from .core.database import init_db
+from .api.error_handlers import register_error_handlers
+from .api.routers import all_routers
+from .api.schemas.common import HealthResponse
 from .core.logging import get_logger
-from .routers import all_routers
-from .scheduler import add_job, shutdown_scheduler, start_scheduler
-from .scheduler.jobs import JOBS
-from .schemas.common import HealthResponse
+from .core.settings import get_settings
+from .infrastructure.db.base import Base
+from .infrastructure.db.session import create_db_engine, create_session_factory
+from .infrastructure.external.tmdb_client import TMDBClient
+from .infrastructure.scheduler import setup_jobs, shutdown_scheduler, start_scheduler
+from .infrastructure.vector.chroma_store import ChromaVectorStore
 
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    settings = get_settings()
+
+    engine = create_db_engine(settings.database.database_url)
+    session_factory = create_session_factory(engine)
+    Base.metadata.create_all(bind=engine)
+    app.state.engine = engine
+    app.state.session_factory = session_factory
+
+    app.state.tmdb_client = TMDBClient(
+        settings.tmdb.tmdb_api_key, settings.tmdb.tmdb_base_url,
+    )
+
+    vector_store = ChromaVectorStore(
+        str(settings.embedding.vector_store_path),
+        settings.embedding.embedding_model,
+        settings.embedding.use_cuda,
+    )
+    app.state.vector_store = vector_store
+
     start_scheduler()
-    for job in JOBS:
-        add_job(*job)
+    setup_jobs(session_factory, app.state.tmdb_client, vector_store, settings)
+
     logger.warning("API server started")
     yield
     shutdown_scheduler()
@@ -30,13 +51,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+def get_cors_origins() -> list[str]:
+    settings = get_settings()
+    return settings.security.cors_origins
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_error_handlers(app)
 
 
 @app.get("/api/health", tags=["health"])

@@ -1,22 +1,21 @@
 import logging
-import os
-from pathlib import Path
 
-LOG_DIR = Path(__file__).parent.parent.parent / "logs"
-LOG_DIR.mkdir(exist_ok=True)
-LOG_FILE = LOG_DIR / "logs.txt"
-LOGLEVEL = getattr(logging, os.getenv("LOGLEVEL", "INFO"), logging.INFO)
+from .settings import get_settings
 
 
 def get_logger(name: str) -> logging.Logger:
+    settings = get_settings()
+    log_level = getattr(logging, settings.logging.log_level, logging.INFO)
+    log_file = settings.logging.log_file
+
     logger = logging.getLogger(name)
-    logger.setLevel(LOGLEVEL)
+    logger.setLevel(log_level)
 
     if not logger.handlers:
-        file_handler = logging.FileHandler(LOG_FILE)
+        file_handler = logging.FileHandler(log_file)
         console_handler = logging.StreamHandler()
         file_handler.setLevel(logging.WARNING)
-        console_handler.setLevel(LOGLEVEL)
+        console_handler.setLevel(log_level)
 
         formatter = logging.Formatter(
             "[%(asctime)s] | %(levelname)-7s | %(name)s %(funcName)s() | %(message)s",

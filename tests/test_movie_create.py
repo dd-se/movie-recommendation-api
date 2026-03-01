@@ -1,19 +1,19 @@
-from datetime import date
 
 import pytest
 from pydantic import ValidationError
 
-from backend.schemas import MovieCreate
+from backend.infrastructure.external.tmdb_client import TMDBMovieData
+from backend.domain.policies import is_acceptable_movie
 
 
 def test_valid_movie_create(example_response):
-    """Test creating a MovieCreate instance with valid data."""
+    """Test creating a TMDBMovieData instance with valid data."""
 
-    movie = MovieCreate(**example_response)
+    movie = TMDBMovieData(**example_response)
     assert movie.tmdb_id == 272
     assert movie.title == "Batman Begins"
     assert movie.spoken_languages == "English, Urdu, Mandarin"
-    assert movie.is_my_kind_of_movie()
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_none_fields():
@@ -36,10 +36,10 @@ def test_none_fields():
         "tagline": None,
         "cast": None,
     }
-    movie = MovieCreate(**data)
+    movie = TMDBMovieData(**data)
     assert movie.genres is None
     assert movie.spoken_languages is None
-    assert movie.is_my_kind_of_movie() is False
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_empty_strings_to_none():
@@ -57,7 +57,7 @@ def test_empty_strings_to_none():
         "tagline": "",
         "cast": "",
     }
-    movie = MovieCreate(**data)
+    movie = TMDBMovieData(**data)
     assert movie.status is None
     assert movie.overview is None
     assert movie.genres is None
@@ -67,7 +67,7 @@ def test_empty_strings_to_none():
     assert movie.keywords is None
     assert movie.tagline is None
     assert movie.cast is None
-    assert not movie.is_my_kind_of_movie()
+    assert not is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_empty_strings_and_none_fields():
@@ -91,7 +91,7 @@ def test_empty_strings_and_none_fields():
         "cast": "",
     }
 
-    movie = MovieCreate(**data)
+    movie = TMDBMovieData(**data)
     assert movie.status is None
     assert movie.overview is None
     assert movie.genres is None
@@ -101,14 +101,14 @@ def test_empty_strings_and_none_fields():
     assert movie.keywords is None
     assert movie.tagline is None
     assert movie.cast is None
-    assert not movie.is_my_kind_of_movie()
+    assert not is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_missing_required_fields():
     """Test that missing required fields (tmdb_id, title) raise ValidationError."""
     data = {"status": "Released", "genres": [{"name": "Drama"}], "spoken_languages": [{"english_name": "English"}]}
     with pytest.raises(ValidationError) as cm:
-        MovieCreate(**data)
+        TMDBMovieData(**data)
     errors = cm.value.errors()
     assert len(errors) == 2
     assert errors[0]["loc"] == ("tmdb_id",)
@@ -121,7 +121,6 @@ def test_invalid_types(example_response):
         {
             "id": "not_an_int",
             "title": 123,
-            "vote_average": "not_a_float",
             "release_date": "not_a_date",
             "popularity": "not_a_float",
             "runtime": "not_an_int",
@@ -131,7 +130,7 @@ def test_invalid_types(example_response):
     )
 
     with pytest.raises(ValidationError) as e:
-        MovieCreate(**example_response)
+        TMDBMovieData(**example_response)
     errors = e.value.errors()
     assert len(errors) == 7
 
@@ -142,8 +141,8 @@ def test_is_my_kind_of_movie_english(example_response):
         "genres": [{"name": "Action"}, {"name": "Thriller"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_is_my_kind_of_movie_turkish(example_response):
@@ -152,8 +151,8 @@ def test_is_my_kind_of_movie_turkish(example_response):
         "genres": [{"name": "Action"}, {"name": "Thriller"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_is_my_kind_of_movie_swedish(example_response):
@@ -162,8 +161,8 @@ def test_is_my_kind_of_movie_swedish(example_response):
         "genres": [{"name": "Documentary"}, {"name": "Comedy"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is True
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is True
 
 
 def test_is_my_kind_of_movie_documentary(example_response):
@@ -172,8 +171,8 @@ def test_is_my_kind_of_movie_documentary(example_response):
         "genres": [{"name": "Documentary"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_music(example_response):
@@ -182,8 +181,8 @@ def test_is_my_kind_of_movie_music(example_response):
         "genres": [{"name": "Music"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_documentary_music(example_response):
@@ -192,8 +191,8 @@ def test_is_my_kind_of_movie_documentary_music(example_response):
         "genres": [{"name": "Documentary"}, {"name": "Music"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_no_language(example_response):
@@ -202,8 +201,8 @@ def test_is_my_kind_of_movie_no_language(example_response):
         "genres": [{"name": "Action"}, {"name": "Drama"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_mixed_case_language(example_response):
@@ -212,18 +211,18 @@ def test_is_my_kind_of_movie_mixed_case_language(example_response):
         "genres": [{"name": "Action"}, {"name": "Drama"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
     data = {"spoken_languages": [{"english_name": "MaNdarin"}, {"english_name": "SwEdIsh"}]}
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
     data = {"spoken_languages": [{"english_name": "MaNdarin"}]}
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_similar_genres(example_response):
@@ -232,8 +231,8 @@ def test_is_my_kind_of_movie_similar_genres(example_response):
         "genres": [{"name": "Musical"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_is_my_kind_of_movie_similar_genres_no_match_language(example_response):
@@ -242,8 +241,8 @@ def test_is_my_kind_of_movie_similar_genres_no_match_language(example_response):
         "genres": [{"name": "Musical"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_empty_genres(example_response):
@@ -252,9 +251,9 @@ def test_is_my_kind_of_movie_empty_genres(example_response):
         "genres": [],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
+    movie = TMDBMovieData(**example_response)
     assert movie.genres is None
-    assert not movie.is_my_kind_of_movie()
+    assert not is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_is_my_kind_of_movie_mixed_case_genres(example_response):
@@ -263,24 +262,24 @@ def test_is_my_kind_of_movie_mixed_case_genres(example_response):
         "genres": [{"name": "DOcUmentary"}, {"name": "MusIc"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "Mandarin"}],
         "genres": [{"name": "DrAma"}, {"name": "MusIc"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
     data = {
         "spoken_languages": [{"english_name": "Urdu"}, {"english_name": "Mandarin"}],
         "genres": [{"name": "DrAma"}, {"name": "MusIc"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
 
 def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
@@ -291,8 +290,8 @@ def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
         ],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False
 
     data = {
         "genres": [
@@ -301,8 +300,8 @@ def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
         ],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie()
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages)
 
 
 def test_is_my_kind_of_movie_no_language_valid_genre(example_response):
@@ -311,5 +310,5 @@ def test_is_my_kind_of_movie_no_language_valid_genre(example_response):
         "genres": [{"name": "DrAma"}, {"name": "MusIcAl"}],
     }
     example_response.update(data)
-    movie = MovieCreate(**example_response)
-    assert movie.is_my_kind_of_movie() is False
+    movie = TMDBMovieData(**example_response)
+    assert is_acceptable_movie(movie.genres, movie.spoken_languages) is False

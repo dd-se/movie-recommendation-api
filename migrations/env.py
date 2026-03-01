@@ -15,7 +15,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
-from backend.storage.db import Base
+from backend.infrastructure.db.base import Base  # noqa: E402
 
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata

@@ -1,8 +1,8 @@
 import os
 
-os.environ["TMDB_API_KEY"] = ""
+os.environ["TMDB_API_KEY"] = "test_api_key"
 os.environ["USE_CUDA"] = "false"
-os.environ["SECRET_KEY"] = ""
+os.environ["SECRET_KEY"] = "test_secret_key_for_testing_purposes_only_32_chars"
 os.environ["ACCESS_TOKEN_EXPIRE_DAYS"] = "32"
 import json
 from datetime import datetime, timezone
@@ -12,14 +12,14 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 from requests import RequestException
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.app import app
-from backend.core.database import Base
-from backend.core.security import get_current_active_user, get_current_user
-from backend.models import Movie, User
+from backend.infrastructure.db.base import Base
+from backend.api.deps import get_current_user, get_session
+from backend.infrastructure.db.models import Movie, User
 
 TEST_SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 test_engine = create_engine(TEST_SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -37,8 +37,11 @@ class MockResponseObject:
     def json(self):
         return self.mock_data
 
+    def raise_for_status(self):
+        pass
 
-def mock_call_external_api(url: str, params: dict):
+
+def mock_requests_get(url: str, **kwargs):
     if any(endpoint in url for endpoint in ["now_playing", "top_rated", "popular"]):
         return MockResponseObject(GENERIC_RESPONSE)
 
@@ -50,10 +53,7 @@ def mock_call_external_api(url: str, params: dict):
 
 
 @pytest.fixture(scope="function")
-def in_memory_test_db(monkeypatch):
-    monkeypatch.setattr("backend.core.database.engine", test_engine)
-    monkeypatch.setattr("backend.core.database.SessionLocal", TestingSessionLocal)
-
+def in_memory_test_db():
     Base.metadata.create_all(bind=test_engine)
 
     try:
@@ -102,13 +102,13 @@ def in_memory_test_db(monkeypatch):
 
 @pytest.fixture(scope="function")
 def mock_external_api_requests(monkeypatch):
-    monkeypatch.setattr("backend.external.tmdb.call_external_api", mock_call_external_api)
+    monkeypatch.setattr("backend.infrastructure.external.tmdb_client.requests.get", mock_requests_get)
 
 
 @pytest.fixture(scope="function")
 def mock_scheduler(monkeypatch):
     dummy_scheduler = Mock()
-    monkeypatch.setattr("backend.scheduler.background_scheduler", dummy_scheduler)
+    monkeypatch.setattr("backend.infrastructure.scheduler.background_scheduler", dummy_scheduler)
 
 
 async def override_get_current_user():
@@ -118,9 +118,18 @@ async def override_get_current_user():
     return test_user
 
 
+def override_get_session():
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
 @pytest.fixture(scope="function")
 def client(in_memory_test_db, mock_external_api_requests, mock_scheduler):
     app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_session] = override_get_session
     client = TestClient(app)
 
     yield client

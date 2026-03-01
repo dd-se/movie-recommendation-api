@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
-from backend.schemas import MovieFilter, MovieSearch, UserCreate
+from backend.api.schemas.movie import MovieFilter, MovieSearch
+from backend.api.schemas.auth import UserCreate
 
 
 def test_root_endpoint(client: TestClient):
