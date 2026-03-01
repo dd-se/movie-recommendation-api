@@ -50,9 +50,12 @@ app.add_middleware(
 )
 
 
+from ..validation import HealthResponse
+
+
 @app.get("/api/health", tags=["health"])
-async def health_check():
-    return {"status": "ok"}
+def health_check() -> HealthResponse:
+    return HealthResponse(status="ok")
 
 
 for router in [admin_router, auth_router, v1_router, v2_router]:

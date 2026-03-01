@@ -43,23 +43,13 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def get_user(db: ApiSession, email: str) -> User | None:
-    q = select(User).where(User.email == email)
-    user = db.execute(q).scalar()
-    return user
+    return db.execute(select(User).where(User.email == email)).scalar()
 
 
-def generate_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+def generate_access_token(data: dict[str, str], expires_delta: timedelta | None = None) -> str:
+    to_encode: dict[str, str | datetime] = data.copy()
+    to_encode["exp"] = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def authenticate_user(db: ApiSession, email: str, password: str) -> User:
@@ -73,7 +63,11 @@ def authenticate_user(db: ApiSession, email: str, password: str) -> User:
     return user
 
 
-async def get_current_user(security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)], db: ApiSession):
+def get_current_user(
+    security_scopes: SecurityScopes,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: ApiSession,
+) -> User:
     try:
         payload: dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
@@ -85,7 +79,7 @@ async def get_current_user(security_scopes: SecurityScopes, token: Annotated[str
         )
 
     except (InvalidTokenError, ValidationError) as e:
-        print(e)
+        logger.warning(f"JWT validation failed: {e}")
         raise INVALID_JWT_TOKEN
 
     except Exception as e:
@@ -108,7 +102,7 @@ async def get_current_user(security_scopes: SecurityScopes, token: Annotated[str
     return user
 
 
-async def get_current_active_user(current_user: Annotated[User, Security(get_current_user)]):
+def get_current_active_user(current_user: Annotated[User, Security(get_current_user)]) -> User:
     if current_user.disabled:
         raise DISABLED_USER
 
@@ -119,8 +113,8 @@ AuthedUser_MR = Annotated[User, Security(get_current_active_user, scopes=["movie
 AuthedUser_MW = Annotated[User, Security(get_current_active_user, scopes=["movie:write"])]
 
 
-@auth_router.post("/signup", summary="Create a new user for API access", response_model=UserSchema)
-async def create_user(user: UserCreate, db: ApiSession):
+@auth_router.post("/signup", summary="Create a new user for API access")
+def create_user(user: UserCreate, db: ApiSession) -> UserSchema:
     existing_user = get_user(db, user.email)
 
     if existing_user:
@@ -134,8 +128,8 @@ async def create_user(user: UserCreate, db: ApiSession):
     return user_in_db
 
 
-@auth_router.post("/login", summary="Login to get an API key to access protected endpoints", response_model=ApiTokenSchema)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: ApiSession):
+@auth_router.post("/login", summary="Login to get an API key to access protected endpoints")
+def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: ApiSession) -> ApiTokenSchema:
     user = authenticate_user(db, form_data.username, form_data.password)
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
 
@@ -147,14 +141,14 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         data={"sub": user.email, "scope": " ".join(form_data.scopes)},
         expires_delta=access_token_expires,
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return ApiTokenSchema(access_token=access_token, token_type="bearer")
 
 
-@auth_router.get("/whoami", summary="Get details about the current user", response_model=UserSchema)
-async def whoami(user: AuthedUser_MR):
+@auth_router.get("/whoami", summary="Get details about the current user")
+def whoami(user: AuthedUser_MR) -> UserSchema:
     return user
 
 
-@auth_router.get("/write-test", summary="Test write access to protected endpoints", response_model=UserSchema)
-def write_test(user: AuthedUser_MW):
+@auth_router.get("/write-test", summary="Test write access to protected endpoints")
+def write_test(user: AuthedUser_MW) -> UserSchema:
     return user

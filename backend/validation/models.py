@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 
 class MovieBase(BaseModel):
-    """Our validation model for transforming the TMDB API data for storage in the database."""
+    """Validation model for transforming TMDB API data for storage."""
 
     model_config = ConfigDict(str_strip_whitespace=True, str_min_length=1)
 
@@ -52,7 +52,6 @@ class MovieBase(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        # TMDB keeps 'null' string values as ""
         fields_of_interest = {}
         fields_of_interest["tmdb_id"] = data.get("id")
         fields_of_interest["title"] = data.get("title") if data.get("title") else None
@@ -107,7 +106,9 @@ class MovieCreate(MovieBase):
 
 
 class MovieSchema(BaseModel):
-    """Our response model for a movie stored in the database."""
+    """Response model for a movie stored in the database."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     tmdb_id: Annotated[int, Field(description="The unique identifier for the movie from TMDb.", examples=[24428])]
     title: Annotated[str, Field(description="The title of the movie.", examples=["The Avengers"])]
@@ -143,8 +144,8 @@ class MovieSchema(BaseModel):
 
     @field_validator("release_date", mode="before")
     @classmethod
-    def format_release_date(cls, value) -> date | None:
-        """Helper for formatting release_date from 'YYYYMMDD' to 'YYYY-MM-DD'. ChromaDB stores dates as integers."""
+    def format_release_date(cls, value: Any) -> date | None:
+        """Format release_date from 'YYYYMMDD' to 'YYYY-MM-DD'. ChromaDB stores dates as integers."""
         if value is None or isinstance(value, date):
             return value
         try:
@@ -273,12 +274,7 @@ class MovieFilter(BaseModel):
 
         return self
 
-    def get_movie(self, db: ApiSession, limit: int = 1):
-        """
-        Fetches a movie based on the provided filters.
-        If a description is provided, it uses semantic search via ChromaDB.
-        Otherwise, it constructs a SQL query based on the other filters.
-        """
+    def get_movie(self, db: ApiSession, limit: int = 1) -> list[Movie]:
         if self._has_description:
             where_filter, where_document_filter = self._build_chromadb_query(db)
             relevant_movies = get_relevant_movies(self.description, where_filter, where_document_filter, limit)
@@ -289,12 +285,9 @@ class MovieFilter(BaseModel):
 
         return relevant_movies
 
-    def get_movie_not_recommended_twice(self, db: ApiSession, exclude_tmdb_ids: list[int] | None = None, limit: int = 1):
-        """
-        Fetches a movie based on the provided filters, ensuring it hasn't been recommended before.
-        If a description is provided, it uses semantic search via ChromaDB.
-        Otherwise, it constructs a SQL query based on the other filters.
-        """
+    def get_movie_not_recommended_twice(
+        self, db: ApiSession, exclude_tmdb_ids: list[int] | None = None, limit: int = 1
+    ) -> list[Movie] | list[MovieSchema]:
         if self._has_description:
             where_filter, where_document_filter = self._build_chromadb_query(db, exclude_tmdb_ids)
             relevant_movies = get_relevant_movies(self.description, where_filter, where_document_filter, limit)
@@ -314,7 +307,7 @@ class MovieFilter(BaseModel):
         vote_count_min: int = 50,
         runtime_min: int = 70,
     ) -> tuple[dict | None, dict | None]:
-        metadata_filters = []
+        metadata_filters: list[dict] = []
 
         if exclude_tmdb_ids:
             metadata_filters.append({"tmdb_id": {"$nin": exclude_tmdb_ids}})
@@ -346,7 +339,7 @@ class MovieFilter(BaseModel):
             tmdb_ids = db.execute(q).scalars().all()
             metadata_filters.append({"tmdb_id": {"$in": tmdb_ids}})
 
-        document_filters = []
+        document_filters: list[dict] = []
         for str_method, list_attr in [
             (str.title, self.genres),
             (str.title, self.spoken_languages),
@@ -379,7 +372,7 @@ class MovieFilter(BaseModel):
 
     def _build_sql_query(
         self,
-        tmdb_ids: list[int],
+        tmdb_ids: list[int] | None,
         negation: bool = False,
         limit: int = 1,
         vote_average_min: float = 6.4,
@@ -461,7 +454,8 @@ class MovieSearch(MovieFilter):
     n_results: int = Field(description="Number of results to return", gt=0, le=21, default=5)
 
 
-# AUTH.py pydantic models
+# ── Auth models ───────────────────────────────────────────────────────────
+
 class ApiTokenSchema(BaseModel):
     access_token: str
     token_type: str
@@ -481,17 +475,22 @@ class UserCreate(UserBase):
 
 
 class UserSchema(UserBase):
-    access_token_scopes: list[str] | None
-    access_token_expires: datetime | None
+    model_config = ConfigDict(from_attributes=True)
+
+    access_token_scopes: list[str] | None = None
+    access_token_expires: datetime | None = None
 
 
 # ── Admin models ──────────────────────────────────────────────────────────
 
 class AdminUserItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     email: str
     disabled: bool
     scopes: str
+
 
 class AdminUserList(BaseModel):
     users: list[AdminUserItem]
@@ -499,11 +498,14 @@ class AdminUserList(BaseModel):
     page: int
     per_page: int
 
+
 class UpdateScopesRequest(BaseModel):
     scopes: list[str]
 
+
 class UpdateStatusRequest(BaseModel):
     disabled: bool
+
 
 class QueueItem(BaseModel):
     id: int
@@ -515,27 +517,51 @@ class QueueItem(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+
 class QueueList(BaseModel):
     items: list[QueueItem]
     total: int
     page: int
     per_page: int
 
+
 class QueueRefreshRequest(BaseModel):
     status: str
     message: str | None = None
     movie_ids: list[int] | None = None
+
 
 class BackupItem(BaseModel):
     filename: str
     size_bytes: int
     created_at: str
 
+
 class SchedulerJobItem(BaseModel):
     job_id: str
     name: str
     next_run_time: str | None = None
     trigger: str
+
+
+class DetailResponse(BaseModel):
+    detail: str
+
+
+class ScopeUpdateResponse(BaseModel):
+    detail: str
+    scopes: str
+
+
+class BackupResponse(BaseModel):
+    detail: str
+    filename: str | None = None
+    timestamp: str
+
+
+class QueueRefreshResponse(BaseModel):
+    detail: str
+
 
 class SystemStats(BaseModel):
     total_movies: int
@@ -545,3 +571,7 @@ class SystemStats(BaseModel):
     total_queue: int
     queue_by_status: dict[str, int]
     total_backups: int
+
+
+class HealthResponse(BaseModel):
+    status: str

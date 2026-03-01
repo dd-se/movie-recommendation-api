@@ -1,9 +1,7 @@
-import os
 from datetime import datetime, timezone
-from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, func, select, update
+from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import func, select, update
 
 from ..scheduler import background_scheduler
 from ..storage.db import (
@@ -11,7 +9,6 @@ from ..storage.db import (
     ApiSession,
     Movie,
     MovieQueue,
-    MovieRecommendation,
     QueueStatus,
     User,
     backup_db,
@@ -20,10 +17,14 @@ from ..validation import (
     AdminUserItem,
     AdminUserList,
     BackupItem,
+    BackupResponse,
+    DetailResponse,
     QueueItem,
     QueueList,
     QueueRefreshRequest,
+    QueueRefreshResponse,
     SchedulerJobItem,
+    ScopeUpdateResponse,
     SystemStats,
     UpdateScopesRequest,
     UpdateStatusRequest,
@@ -39,7 +40,7 @@ VALID_SCOPES = {"movie:read", "movie:write"}
 # ── Sync ──────────────────────────────────────────────────────────────────
 
 @admin_router.get("/sync", summary="Sync Movie and MovieQueue tables", status_code=status.HTTP_200_OK)
-async def sync_movie_and_movie_queue_tables(admin: AuthedUser_MW, db: ApiSession):
+def sync_movie_and_movie_queue_tables(admin: AuthedUser_MW, db: ApiSession) -> DetailResponse:
     """Ensures every movie has a corresponding MovieQueue entry."""
     movies = (
         db.execute(
@@ -59,19 +60,19 @@ async def sync_movie_and_movie_queue_tables(admin: AuthedUser_MW, db: ApiSession
         recreated_count += 1
 
     db.commit()
-    return {"detail": f"Recreated '{recreated_count}' missing MovieQueue entries."}
+    return DetailResponse(detail=f"Recreated '{recreated_count}' missing MovieQueue entries.")
 
 
 # ── Users ─────────────────────────────────────────────────────────────────
 
-@admin_router.get("/users", response_model=AdminUserList, summary="List all users")
-async def list_users(
+@admin_router.get("/users", summary="List all users")
+def list_users(
     admin: AuthedUser_MW,
     db: ApiSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     search: str = Query("", description="Filter by email"),
-):
+) -> AdminUserList:
     q = select(User)
     count_q = select(func.count(User.id))
 
@@ -79,11 +80,11 @@ async def list_users(
         q = q.where(User.email.icontains(search))
         count_q = count_q.where(User.email.icontains(search))
 
-    total = db.execute(count_q).scalar() or 0
+    total: int = db.execute(count_q).scalar() or 0
     users = db.execute(q.order_by(User.id).offset((page - 1) * per_page).limit(per_page)).scalars().all()
 
     return AdminUserList(
-        users=[AdminUserItem(id=u.id, email=u.email, disabled=u.disabled, scopes=u.scopes) for u in users],
+        users=[AdminUserItem.model_validate(u) for u in users],
         total=total,
         page=page,
         per_page=per_page,
@@ -91,7 +92,9 @@ async def list_users(
 
 
 @admin_router.patch("/users/{user_id}/scopes", summary="Update user scopes")
-async def update_user_scopes(user_id: int, body: UpdateScopesRequest, admin: AuthedUser_MW, db: ApiSession):
+def update_user_scopes(
+    user_id: int, body: UpdateScopesRequest, admin: AuthedUser_MW, db: ApiSession
+) -> ScopeUpdateResponse:
     for scope in body.scopes:
         if scope not in VALID_SCOPES:
             raise HTTPException(status_code=400, detail=f"Invalid scope: {scope}")
@@ -104,11 +107,13 @@ async def update_user_scopes(user_id: int, body: UpdateScopesRequest, admin: Aut
 
     user.scopes = " ".join(body.scopes)
     db.commit()
-    return {"detail": f"Scopes updated for {user.email}", "scopes": user.scopes}
+    return ScopeUpdateResponse(detail=f"Scopes updated for {user.email}", scopes=user.scopes)
 
 
 @admin_router.patch("/users/{user_id}/status", summary="Enable or disable a user")
-async def update_user_status(user_id: int, body: UpdateStatusRequest, admin: AuthedUser_MW, db: ApiSession):
+def update_user_status(
+    user_id: int, body: UpdateStatusRequest, admin: AuthedUser_MW, db: ApiSession
+) -> DetailResponse:
     user = db.execute(select(User).where(User.id == user_id)).scalar()
     if not user:
         raise NOT_FOUND
@@ -119,28 +124,28 @@ async def update_user_status(user_id: int, body: UpdateStatusRequest, admin: Aut
     user.disabled = body.disabled
     db.commit()
     status_text = "disabled" if body.disabled else "enabled"
-    return {"detail": f"User {user.email} has been {status_text}"}
+    return DetailResponse(detail=f"User {user.email} has been {status_text}")
 
 
 # ── Database ──────────────────────────────────────────────────────────────
 
 @admin_router.post("/backup", summary="Create a database backup")
-async def create_backup(admin: AuthedUser_MW):
+def create_backup(admin: AuthedUser_MW) -> BackupResponse:
     try:
         backup_db()
         backups = sorted(BACKUP_PATH.glob("*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
         latest = backups[0] if backups else None
-        return {
-            "detail": "Backup created successfully",
-            "filename": latest.name if latest else None,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
+        return BackupResponse(
+            detail="Backup created successfully",
+            filename=latest.name if latest else None,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Backup failed: {str(e)}")
 
 
-@admin_router.get("/backups", response_model=list[BackupItem], summary="List database backups")
-async def list_backups(admin: AuthedUser_MW):
+@admin_router.get("/backups", summary="List database backups")
+def list_backups(admin: AuthedUser_MW) -> list[BackupItem]:
     backups = sorted(BACKUP_PATH.glob("*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
     return [
         BackupItem(
@@ -154,14 +159,14 @@ async def list_backups(admin: AuthedUser_MW):
 
 # ── Queue ─────────────────────────────────────────────────────────────────
 
-@admin_router.get("/queue", response_model=QueueList, summary="List queue entries")
-async def list_queue(
+@admin_router.get("/queue", summary="List queue entries")
+def list_queue(
     admin: AuthedUser_MW,
     db: ApiSession,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     queue_status: str | None = Query(None, alias="status", description="Filter by queue status"),
-):
+) -> QueueList:
     q = select(MovieQueue, Movie.title).outerjoin(Movie, MovieQueue.tmdb_id == Movie.tmdb_id)
     count_q = select(func.count(MovieQueue.id))
 
@@ -173,7 +178,7 @@ async def list_queue(
         q = q.where(MovieQueue.status == qs)
         count_q = count_q.where(MovieQueue.status == qs)
 
-    total = db.execute(count_q).scalar() or 0
+    total: int = db.execute(count_q).scalar() or 0
     rows = db.execute(
         q.order_by(MovieQueue.updated_at.desc().nullslast(), MovieQueue.id.desc())
         .offset((page - 1) * per_page)
@@ -197,7 +202,7 @@ async def list_queue(
 
 
 @admin_router.post("/queue/refresh", summary="Refresh queue items")
-async def refresh_queue(body: QueueRefreshRequest, admin: AuthedUser_MW, db: ApiSession):
+def refresh_queue(body: QueueRefreshRequest, admin: AuthedUser_MW, db: ApiSession) -> QueueRefreshResponse:
     try:
         target_status = QueueStatus(body.status)
     except ValueError:
@@ -215,22 +220,22 @@ async def refresh_queue(body: QueueRefreshRequest, admin: AuthedUser_MW, db: Api
     )
     result = db.execute(q)
     db.commit()
-    return {"detail": f"Updated {result.rowcount} queue entries to '{body.status}'"}
+    return QueueRefreshResponse(detail=f"Updated {result.rowcount} queue entries to '{body.status}'")
 
 
 # ── System ────────────────────────────────────────────────────────────────
 
-@admin_router.get("/stats", response_model=SystemStats, summary="Get system statistics")
-async def get_stats(admin: AuthedUser_MW, db: ApiSession):
-    total_movies = db.execute(select(func.count(Movie.id))).scalar() or 0
-    total_users = db.execute(select(func.count(User.id))).scalar() or 0
-    active_users = db.execute(select(func.count(User.id)).where(User.disabled == False)).scalar() or 0
+@admin_router.get("/stats", summary="Get system statistics")
+def get_stats(admin: AuthedUser_MW, db: ApiSession) -> SystemStats:
+    total_movies: int = db.execute(select(func.count(Movie.id))).scalar() or 0
+    total_users: int = db.execute(select(func.count(User.id))).scalar() or 0
+    active_users: int = db.execute(select(func.count(User.id)).where(User.disabled == False)).scalar() or 0
     disabled_users = total_users - active_users
 
     queue_rows = db.execute(
         select(MovieQueue.status, func.count(MovieQueue.id)).group_by(MovieQueue.status)
     ).all()
-    queue_by_status = {str(s): c for s, c in queue_rows}
+    queue_by_status: dict[str, int] = {str(s): c for s, c in queue_rows}
     total_queue = sum(queue_by_status.values())
 
     backups = list(BACKUP_PATH.glob("*.db"))
@@ -246,8 +251,8 @@ async def get_stats(admin: AuthedUser_MW, db: ApiSession):
     )
 
 
-@admin_router.get("/scheduler", response_model=list[SchedulerJobItem], summary="Get scheduler jobs")
-async def get_scheduler_jobs(admin: AuthedUser_MW):
+@admin_router.get("/scheduler", summary="Get scheduler jobs")
+def get_scheduler_jobs(admin: AuthedUser_MW) -> list[SchedulerJobItem]:
     jobs = background_scheduler.get_jobs()
     return [
         SchedulerJobItem(
