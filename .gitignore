@@ -14,3 +14,9 @@ wheels/
 .vscode/
 data/
 logs/
+
+# pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/

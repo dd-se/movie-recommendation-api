@@ -186,7 +186,7 @@ export default function UsersPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Scopes</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right">Enabled</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
