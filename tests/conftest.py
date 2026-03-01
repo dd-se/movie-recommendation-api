@@ -16,9 +16,10 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend.api.auth import get_current_active_user, get_current_user
-from backend.api.main import app
-from backend.storage.db import Base, Movie, User
+from backend.app import app
+from backend.core.database import Base
+from backend.core.security import get_current_active_user, get_current_user
+from backend.models import Movie, User
 
 TEST_SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 test_engine = create_engine(TEST_SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -50,8 +51,8 @@ def mock_call_external_api(url: str, params: dict):
 
 @pytest.fixture(scope="function")
 def in_memory_test_db(monkeypatch):
-    monkeypatch.setattr("backend.storage.db.engine", test_engine)
-    monkeypatch.setattr("backend.storage.db.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("backend.core.database.engine", test_engine)
+    monkeypatch.setattr("backend.core.database.SessionLocal", TestingSessionLocal)
 
     Base.metadata.create_all(bind=test_engine)
 
@@ -94,9 +95,8 @@ def in_memory_test_db(monkeypatch):
     finally:
         db.close()
 
-    yield  # Run the test
+    yield
 
-    # Teardown on test finish
     Base.metadata.drop_all(bind=test_engine)
 
 

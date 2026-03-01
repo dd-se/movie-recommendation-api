@@ -14,10 +14,11 @@ import requests
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
+from ..core.database import get_db, init_db
+from ..core.logging import get_logger
 from ..external.tmdb import fetch_movie_details
-from ..logger import get_logger
+from ..models import Movie, MovieQueue
 from ..scheduler.jobs import process_queue_add_to_vector_store, process_queue_descriptions
-from ..storage.db import Movie, MovieQueue, get_db, init_db
 
 logger = get_logger(__name__)
 
@@ -26,20 +27,19 @@ POP_DB_PATH.mkdir(parents=True, exist_ok=True)
 DAILY_IDS_EXPORT = POP_DB_PATH / "tmdb_daily_ids_export.json"
 FILTERED_DAILY_IDS_EXPORT = POP_DB_PATH / "tmdb_ids_filtered.csv"
 STATE_FILE = POP_DB_PATH / "resume_from_index.json"
-LATIN_CHARS = regex.compile(r"[\p{Latin}0-9\s.,!?;:/\'\"()\-\[\]–—“”‘’@]")
+LATIN_CHARS = regex.compile(r"[\p{Latin}0-9\s.,!?;:/\'\"()\-\[\]–—\u201c\u201d\u2018\u2019@]")
 
 
-def download_and_extract_export_file(url: str):
+def download_and_extract_export_file(url: str) -> None:
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with gzip.GzipFile(fileobj=r.raw) as f_in:
             with open(DAILY_IDS_EXPORT, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
-
     print(f"Extracted: {DAILY_IDS_EXPORT}")
 
 
-def is_mostly_latin(text: str, threshold: float = 0.9):
+def is_mostly_latin(text: str, threshold: float = 0.9) -> bool:
     text = text.strip()
     text_len = len(text)
     if text_len == 0:
@@ -48,27 +48,27 @@ def is_mostly_latin(text: str, threshold: float = 0.9):
     return (latin_count / text_len) >= threshold
 
 
-def save_state(idx):
+def save_state(idx: int) -> None:
     with open(STATE_FILE, "w") as f:
         json.dump({"resume_from_index": idx}, f)
         logger.info(f"Resume index set to '{idx}'")
 
 
-def load_state():
-    if STATE_FILE.exists():
-        with open(STATE_FILE) as f:
-            return json.load(f).get("resume_from_index", 0)
-    return 0
+def load_state() -> int:
+    if not STATE_FILE.exists():
+        return 0
+    with open(STATE_FILE) as f:
+        return json.load(f).get("resume_from_index", 0)
 
 
-def finish_processing_in_background(stop_processing: threading.Event):
+def finish_processing_in_background(stop_processing: threading.Event) -> None:
     while not stop_processing.is_set():
         process_queue_descriptions()
         process_queue_add_to_vector_store()
         sleep(10)
 
 
-def process_movies(movies: pd.DataFrame):
+def process_movies(movies: pd.DataFrame) -> None:
     start_idx = load_state()
     logger.info(f"Resuming from index '{start_idx}'")
     db = get_db()
@@ -80,24 +80,18 @@ def process_movies(movies: pd.DataFrame):
         for idx, row in movies.iloc[start_idx:].iterrows():
             try:
                 row_id = row.get("id")
-
                 if row_id in current_ids:
                     continue
-
                 validated_movie = fetch_movie_details(row_id)
-
                 if not validated_movie.is_my_kind_of_movie():
                     continue
-
                 movie = Movie(**validated_movie.model_dump())
                 queue_entry = MovieQueue(tmdb_id=validated_movie.tmdb_id)
                 db.add_all([movie, queue_entry])
                 added_counter += 1
-
                 if added_counter % 50 == 0:
                     db.commit()
                     save_state(idx + 1)
-
             except KeyboardInterrupt:
                 db.commit()
                 save_state(idx)
@@ -114,19 +108,15 @@ def process_movies(movies: pd.DataFrame):
     finally:
         stop_processing.set()
         db.close()
-
     save_state(len(movies))
     logger.info("Processed all available rows")
 
 
-def populate_db(url: str | None, resume: bool):
-    # Link to a daily TMDB ID export (https://developer.themoviedb.org/docs/daily-id-exports).
-    # url = "http://files.tmdb.org/p/exports/movie_ids_09_15_2025.json.gz"
+def populate_db(url: str | None, resume: bool) -> None:
     init_db()
     if url:
         if STATE_FILE.exists():
             STATE_FILE.unlink()
-
         if FILTERED_DAILY_IDS_EXPORT.exists():
             FILTERED_DAILY_IDS_EXPORT.unlink()
         download_and_extract_export_file(url)
