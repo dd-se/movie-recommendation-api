@@ -49,9 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { access_token } = await api.login(email, password);
-      saveToken(access_token);
-      const u = await api.whoami(access_token);
+      let accessToken: string;
+      try {
+        const res = await api.login(email, password, 'movie:read movie:write');
+        accessToken = res.access_token;
+      } catch {
+        const res = await api.login(email, password, 'movie:read');
+        accessToken = res.access_token;
+      }
+      saveToken(accessToken);
+      const u = await api.whoami(accessToken);
       setUser(u);
     },
     [saveToken],
