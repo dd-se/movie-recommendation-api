@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, LogOut, User, Compass } from 'lucide-react';
+import { Search, LogOut, User, Compass, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -96,6 +97,11 @@ export default function Layout() {
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" /> Profile
                   </DropdownMenuItem>
+                  {isAdmin(user) && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')}>
+                      <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" /> Log out
