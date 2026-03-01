@@ -1,6 +1,9 @@
 from fastapi import HTTPException, status
 
-NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+NOT_FOUND = HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail="Not found",
+)
 EXISTING_USER = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
     detail="Email already registered",

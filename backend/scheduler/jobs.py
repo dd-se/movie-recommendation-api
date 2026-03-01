@@ -3,15 +3,21 @@ from typing import Any
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select
 
-from ..external.tmdb import fetch_movie_details, fetch_now_playing_tmdb_ids, fetch_popular_tmdb_ids, fetch_top_rated_tmdb_ids
-from ..logger import get_logger
-from ..storage.db import Movie, MovieQueue, QueueStatus, backup_db, get_db
-from ..storage.vector_store import store_movie_descriptions
+from ..core.database import get_db
+from ..core.logging import get_logger
+from ..external.tmdb import (
+    fetch_movie_details,
+    fetch_now_playing_tmdb_ids,
+    fetch_popular_tmdb_ids,
+    fetch_top_rated_tmdb_ids,
+)
+from ..models import Movie, MovieQueue, QueueStatus
+from ..services.vector_store import store_movie_descriptions
 
 logger = get_logger(__name__)
 
 
-def job_fetch_current_movies(pages: int = 1):
+def job_fetch_current_movies(pages: int = 1) -> None:
     logger.info(f"Starting fetch_current_movies job for '{pages}' page(s).")
     try:
         db = get_db()
@@ -26,7 +32,6 @@ def job_fetch_current_movies(pages: int = 1):
 
                 q = select(Movie.tmdb_id).where(Movie.tmdb_id.in_(fetched_tmdb_ids))
                 tmdb_ids_in_db = db.execute(q).scalars().all()
-
                 tmdb_ids_not_in_db = fetched_tmdb_ids - set(tmdb_ids_in_db)
 
                 if not tmdb_ids_not_in_db:
@@ -34,18 +39,12 @@ def job_fetch_current_movies(pages: int = 1):
                     continue
 
                 new_movies_to_add = []
-
                 for tmdb_id in tmdb_ids_not_in_db:
                     try:
                         validated_movie = fetch_movie_details(tmdb_id)
-
                         if validated_movie.is_my_kind_of_movie():
-                            movie = Movie(**validated_movie.model_dump())
-                            queue_entry = MovieQueue(tmdb_id=validated_movie.tmdb_id)
-
-                            new_movies_to_add.append(movie)
-                            new_movies_to_add.append(queue_entry)
-
+                            new_movies_to_add.append(Movie(**validated_movie.model_dump()))
+                            new_movies_to_add.append(MovieQueue(tmdb_id=validated_movie.tmdb_id))
                     except Exception as e:
                         logger.error(f"Failed to process movie ID '{tmdb_id}': {e}", exc_info=True)
 
@@ -60,24 +59,17 @@ def job_fetch_current_movies(pages: int = 1):
             except Exception as e:
                 logger.error(f"Unexpected error while fetching movies on page {page}: '{e}'", exc_info=True)
                 db.rollback()
-
     finally:
         db.close()
 
     logger.info("Finished fetch_current_movies job")
 
 
-def process_queue_refresh_database(limit: int = 10000):
+def process_queue_refresh_database(limit: int = 10000) -> None:
     logger.info(f"Starting process_queue_refresh_database job with a limit of '{limit}'")
-
     try:
         db = get_db()
-        q = (
-            select(MovieQueue)
-            .where(MovieQueue.status == QueueStatus.REFRESH_DATA)
-            .order_by(MovieQueue.updated_at.asc())
-            .limit(limit)
-        )
+        q = select(MovieQueue).where(MovieQueue.status == QueueStatus.REFRESH_DATA).order_by(MovieQueue.updated_at.asc()).limit(limit)
         movie_queues = db.execute(q).scalars().all()
 
         if not movie_queues:
@@ -85,25 +77,19 @@ def process_queue_refresh_database(limit: int = 10000):
             return
 
         logger.info(f"Found {len(movie_queues)} movie(s) to refresh.")
-
         fail_count = 0
         changed_movies_count = 0
+
         for queue in movie_queues:
             try:
                 validated_movie = fetch_movie_details(queue.tmdb_id)
                 changed = queue.movie.update(validated_movie)
-
+                queue.status = QueueStatus.PREPROCESS_DESCRIPTION if changed else QueueStatus.COMPLETED
                 if changed:
                     changed_movies_count += 1
-                    queue.status = QueueStatus.PREPROCESS_DESCRIPTION
-
-                else:
-                    queue.status = QueueStatus.COMPLETED
-
                 if queue.retries > 0:
                     queue.retries = 0
                     queue.message = None
-
             except Exception as e:
                 logger.error(f"Failed to refresh movie TMDB ID '{queue.tmdb_id}': {e}", exc_info=True)
                 queue.retries += 1
@@ -112,27 +98,20 @@ def process_queue_refresh_database(limit: int = 10000):
                 if queue.retries > 2:
                     queue.status = QueueStatus.FAILED
 
-        logger.warning(
-            f"Refreshed '{len(movie_queues)}' movie(s): '{fail_count}' failed, '{changed_movies_count}' with changes."
-        )
+        logger.warning(f"Refreshed '{len(movie_queues)}' movie(s): '{fail_count}' failed, '{changed_movies_count}' with changes.")
         db.commit()
     except Exception as e:
         logger.error(f"A critical error occurred during the queue processing job: {e}", exc_info=True)
         db.rollback()
-
     finally:
         db.close()
 
 
-def process_queue_descriptions():
+def process_queue_descriptions() -> None:
     logger.info("Starting process_queue_descriptions job")
     try:
         db = get_db()
-        q = (
-            select(MovieQueue)
-            .where(MovieQueue.status == QueueStatus.PREPROCESS_DESCRIPTION)
-            .order_by(MovieQueue.created_at.asc())
-        )
+        q = select(MovieQueue).where(MovieQueue.status == QueueStatus.PREPROCESS_DESCRIPTION).order_by(MovieQueue.created_at.asc())
         movie_queues = db.execute(q).scalars().all()
 
         if not movie_queues:
@@ -143,18 +122,16 @@ def process_queue_descriptions():
             for queue in movie_queues:
                 queue.preprocessed_description = queue.movie.get_description()
                 queue.status = QueueStatus.CREATE_EMBEDDING
-
             db.commit()
             logger.info(f"Processed descriptions for '{len(movie_queues)}' movie(s).")
         except Exception as e:
             logger.error(f"Unexpected error while processing movie descriptions: '{e}'", exc_info=True)
             db.rollback()
-
     finally:
         db.close()
 
 
-def process_queue_add_to_vector_store():
+def process_queue_add_to_vector_store() -> None:
     logger.info("Starting process_queue_add_to_vector_store job")
     try:
         db = get_db()
@@ -174,16 +151,12 @@ def process_queue_add_to_vector_store():
                 ids.append(str(movie_queue.tmdb_id))
                 descriptions.append(movie_queue.preprocessed_description)
                 metadatas.append(movie_queue.movie.get_metadata())
-
                 movie_queue.status = QueueStatus.COMPLETED
-
             store_movie_descriptions(ids, descriptions, metadatas)
             db.commit()
-
         except Exception as e:
             logger.error(f"Unexpected error while processing movie descriptions: '{e}'", exc_info=True)
             db.rollback()
-
     finally:
         db.close()
 

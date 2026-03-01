@@ -3,17 +3,17 @@ from collections.abc import Callable
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from ..logger import get_logger
+from ..core.logging import get_logger
 
 logger = get_logger(__name__)
 background_scheduler = BackgroundScheduler()
 
 
-def start_scheduler():
+def start_scheduler() -> None:
     background_scheduler.start()
 
 
-def shutdown_scheduler():
+def shutdown_scheduler() -> None:
     background_scheduler.shutdown()
 
 

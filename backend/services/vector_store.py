@@ -4,10 +4,9 @@ from pathlib import Path
 import chromadb
 from chromadb.utils import embedding_functions
 
-from ..logger import get_logger
+from ..core.logging import get_logger
 
 logger = get_logger(__name__)
-
 
 VECTOR_STORE_PATH = Path(__file__).parent.parent.parent / "data" / "vector_store"
 VECTOR_STORE_PATH.mkdir(parents=True, exist_ok=True)
@@ -18,7 +17,7 @@ MODEL = "nomic-ai/nomic-embed-text-v1.5"
 COLLECTION = None
 
 
-def load_collection():
+def load_collection() -> None:
     global COLLECTION
     if COLLECTION is not None:
         return
@@ -41,9 +40,8 @@ def load_collection():
 
 
 def store_movie_descriptions(
-    ids: list[str], descriptions: list[str], metadatas: list[dict[str, int]], max_batch_size=5460
+    ids: list[str], descriptions: list[str], metadatas: list[dict[str, int]], max_batch_size: int = 5460,
 ) -> None:
-    """Processes movie descriptions, generates an embeddings, and stores them in the ChromaDB collection."""
     load_collection()
     logger.warning(f"Processing {len(ids)} description(s) in batches of up to {max_batch_size}")
     prefixed_documents = [f"search_document: {doc}" for doc in descriptions]
@@ -52,18 +50,15 @@ def store_movie_descriptions(
         batch_documents = prefixed_documents[i : i + max_batch_size]
         batch_metadatas = metadatas[i : i + max_batch_size]
         COLLECTION.add(ids=batch_ids, documents=batch_documents, metadatas=batch_metadatas)
-
     logger.warning("Processing completed")
 
 
 def get_relevant_movies(
-    query: str, where_filter: dict = None, where_document_filter: dict = None, k: int = 50, max_distance: float = 0.39
+    query: str, where_filter: dict | None = None, where_document_filter: dict | None = None,
+    k: int = 50, max_distance: float = 0.39,
 ) -> list[dict]:
     load_collection()
-    logger.debug(f"Received raw query: '{query}'")
-    logger.debug(f"Where filter: '{where_filter}'")
-    logger.debug(f"Doc filter: '{where_document_filter}'")
-
+    logger.debug(f"Query: '{query}' | where={where_filter} | doc_filter={where_document_filter}")
     results = COLLECTION.query(
         query_texts=[f"search_query: {query}"],
         n_results=k,

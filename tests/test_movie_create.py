@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from backend.validation import MovieCreate
+from backend.schemas import MovieCreate
 
 
 def test_valid_movie_create(example_response):
@@ -137,19 +137,16 @@ def test_invalid_types(example_response):
 
 
 def test_is_my_kind_of_movie_english(example_response):
-    """Test is_my_kind_of_movie with English language and non-documentary/music genres."""
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "French"}],
         "genres": [{"name": "Action"}, {"name": "Thriller"}],
     }
-
     example_response.update(data)
     movie = MovieCreate(**example_response)
     assert movie.is_my_kind_of_movie()
 
 
 def test_is_my_kind_of_movie_turkish(example_response):
-    """Test is_my_kind_of_movie with Turkish language."""
     data = {
         "spoken_languages": [{"english_name": "Turkish"}, {"english_name": "French"}],
         "genres": [{"name": "Action"}, {"name": "Thriller"}],
@@ -160,7 +157,6 @@ def test_is_my_kind_of_movie_turkish(example_response):
 
 
 def test_is_my_kind_of_movie_swedish(example_response):
-    """Test is_my_kind_of_movie with Swedish language."""
     data = {
         "spoken_languages": [{"english_name": "Swedish"}, {"english_name": "German"}],
         "genres": [{"name": "Documentary"}, {"name": "Comedy"}],
@@ -171,7 +167,6 @@ def test_is_my_kind_of_movie_swedish(example_response):
 
 
 def test_is_my_kind_of_movie_documentary(example_response):
-    """Test is_my_kind_of_movie with Documentary genre (should return False)."""
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "German"}],
         "genres": [{"name": "Documentary"}],
@@ -182,7 +177,6 @@ def test_is_my_kind_of_movie_documentary(example_response):
 
 
 def test_is_my_kind_of_movie_music(example_response):
-    """Test is_my_kind_of_movie with Music genre (should return False)."""
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "German"}],
         "genres": [{"name": "Music"}],
@@ -193,7 +187,6 @@ def test_is_my_kind_of_movie_music(example_response):
 
 
 def test_is_my_kind_of_movie_documentary_music(example_response):
-    """Test is_my_kind_of_movie with Documentary,Music genres (should return False)."""
     data = {
         "spoken_languages": [{"english_name": "Swedish"}, {"english_name": "German"}],
         "genres": [{"name": "Documentary"}, {"name": "Music"}],
@@ -204,7 +197,6 @@ def test_is_my_kind_of_movie_documentary_music(example_response):
 
 
 def test_is_my_kind_of_movie_no_language(example_response):
-    """Test is_my_kind_of_movie with no matching language (should return False)."""
     data = {
         "spoken_languages": [{"english_name": "Mandarin"}, {"english_name": "German"}],
         "genres": [{"name": "Action"}, {"name": "Drama"}],
@@ -215,7 +207,6 @@ def test_is_my_kind_of_movie_no_language(example_response):
 
 
 def test_is_my_kind_of_movie_mixed_case_language(example_response):
-    """Test is_my_kind_of_movie with mixed case languages (e.g., ENGLISH, turkish)."""
     data = {
         "spoken_languages": [{"english_name": "ENGLISH"}, {"english_name": "turkish"}, {"english_name": "SwEdIsh"}],
         "genres": [{"name": "Action"}, {"name": "Drama"}],
@@ -224,23 +215,18 @@ def test_is_my_kind_of_movie_mixed_case_language(example_response):
     movie = MovieCreate(**example_response)
     assert movie.is_my_kind_of_movie()
 
-    data = {
-        "spoken_languages": [{"english_name": "MaNdarin"}, {"english_name": "SwEdIsh"}],
-    }
+    data = {"spoken_languages": [{"english_name": "MaNdarin"}, {"english_name": "SwEdIsh"}]}
     example_response.update(data)
     movie = MovieCreate(**example_response)
     assert movie.is_my_kind_of_movie()
 
-    data = {
-        "spoken_languages": [{"english_name": "MaNdarin"}],
-    }
+    data = {"spoken_languages": [{"english_name": "MaNdarin"}]}
     example_response.update(data)
     movie = MovieCreate(**example_response)
     assert movie.is_my_kind_of_movie() is False
 
 
 def test_is_my_kind_of_movie_similar_genres(example_response):
-    """Test is_my_kind_of_movie with genres similar to Documentary/Music"""
     data = {
         "spoken_languages": [{"english_name": "ENGLISH"}, {"english_name": "turkish"}, {"english_name": "SwEdIsh"}],
         "genres": [{"name": "Musical"}],
@@ -251,7 +237,6 @@ def test_is_my_kind_of_movie_similar_genres(example_response):
 
 
 def test_is_my_kind_of_movie_similar_genres_no_match_language(example_response):
-    """Test is_my_kind_of_movie with genres similar to Documentary/Music and no matching language."""
     data = {
         "spoken_languages": [{"english_name": "Gobbligook"}, {"english_name": "Mandarin"}],
         "genres": [{"name": "Musical"}],
@@ -262,7 +247,6 @@ def test_is_my_kind_of_movie_similar_genres_no_match_language(example_response):
 
 
 def test_is_my_kind_of_movie_empty_genres(example_response):
-    """Test is_my_kind_of_movie with empty genres."""
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "Mandarin"}],
         "genres": [],
@@ -274,7 +258,6 @@ def test_is_my_kind_of_movie_empty_genres(example_response):
 
 
 def test_is_my_kind_of_movie_mixed_case_genres(example_response):
-    """Test is_my_kind_of_movie with mixed case genres"""
     data = {
         "spoken_languages": [{"english_name": "English"}, {"english_name": "Mandarin"}],
         "genres": [{"name": "DOcUmentary"}, {"name": "MusIc"}],
@@ -301,15 +284,10 @@ def test_is_my_kind_of_movie_mixed_case_genres(example_response):
 
 
 def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
-    """Test is_my_kind_of_movie with multiple genres including Documentary, Music."""
     data = {
         "genres": [
-            {"name": "Documentary"},
-            {"name": "MusIc"},
-            {"name": "Action"},
-            {"name": "Thriller"},
-            {"name": "DrAma"},
-            {"name": "MusIcal"},
+            {"name": "Documentary"}, {"name": "MusIc"}, {"name": "Action"},
+            {"name": "Thriller"}, {"name": "DrAma"}, {"name": "MusIcal"},
         ],
     }
     example_response.update(data)
@@ -318,11 +296,8 @@ def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
 
     data = {
         "genres": [
-            {"name": "Documentary"},
-            {"name": "Action"},
-            {"name": "Thriller"},
-            {"name": "DrAma"},
-            {"name": "MusIcal"},
+            {"name": "Documentary"}, {"name": "Action"},
+            {"name": "Thriller"}, {"name": "DrAma"}, {"name": "MusIcal"},
         ],
     }
     example_response.update(data)
@@ -331,7 +306,6 @@ def test_is_my_kind_of_movie_multiple_genres_no_match(example_response):
 
 
 def test_is_my_kind_of_movie_no_language_valid_genre(example_response):
-    """Test is_my_kind_of_movie with no language but valid genre."""
     data = {
         "spoken_languages": [],
         "genres": [{"name": "DrAma"}, {"name": "MusIcAl"}],

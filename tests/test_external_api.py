@@ -33,4 +33,4 @@ def test_fetch_movie_details(mock_external_api_requests):
     assert all(isinstance(id, int) for id in movies)
 
     with pytest.raises(RequestException):
-        fetch_movie_details(99999999)  # Non-existent movie ID
+        fetch_movie_details(99999999)
