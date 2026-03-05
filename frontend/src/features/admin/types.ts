@@ -70,6 +70,12 @@ export interface LogsResponse {
   log_file: string;
 }
 
+export interface TmdbKeyStatus {
+  masked_key: string;
+  is_placeholder: boolean;
+  is_valid: boolean | null;
+}
+
 export type QueueStatusValue =
   | 'refresh_data'
   | 'preprocess_description'

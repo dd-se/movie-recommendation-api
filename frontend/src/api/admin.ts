@@ -6,6 +6,7 @@ import type {
   SchedulerJob,
   SystemInfo,
   SystemStats,
+  TmdbKeyStatus,
 } from '@/features/admin/types';
 
 const BASE = '';
@@ -163,6 +164,26 @@ export const adminApi = {
 
   getLogs(token: string, lines = 100) {
     return request<LogsResponse>(`/admin/logs?lines=${lines}`, token);
+  },
+
+  // ── Settings ────────────────────────────────────────────────────────
+
+  getTmdbKey(token: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key', token);
+  },
+
+  updateTmdbKey(token: string, apiKey: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key', token, {
+      method: 'PUT',
+      body: JSON.stringify({ api_key: apiKey }),
+    });
+  },
+
+  validateTmdbKey(token: string, apiKey: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key/validate', token, {
+      method: 'POST',
+      body: JSON.stringify({ api_key: apiKey }),
+    });
   },
 
   getHealth() {

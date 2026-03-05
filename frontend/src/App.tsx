@@ -16,6 +16,7 @@ import UsersPage from '@/features/admin/pages/UsersPage';
 import DatabasePage from '@/features/admin/pages/DatabasePage';
 import QueuePage from '@/features/admin/pages/QueuePage';
 import SystemPage from '@/features/admin/pages/SystemPage';
+import SettingsPage from '@/features/admin/pages/SettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="database" element={<DatabasePage />} />
                 <Route path="queue" element={<QueuePage />} />
                 <Route path="system" element={<SystemPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>
             <Toaster position="bottom-right" />

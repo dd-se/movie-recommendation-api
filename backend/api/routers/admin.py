@@ -4,7 +4,7 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from backend.api.deps import AuthedUser_MW, DbSession, MovieRepoDep, QueueRepoDep, UserRepoDep
 from backend.api.schemas.admin import (
@@ -18,8 +18,10 @@ from backend.api.schemas.admin import (
     SchedulerJobItem,
     SystemInfo,
     SystemStats,
+    TmdbKeyResponse,
     UpdateScopesRequest,
     UpdateStatusRequest,
+    UpdateTmdbKeyRequest,
 )
 from backend.api.schemas.common import BackupResponse, DetailResponse, QueueRefreshResponse, ScopeUpdateResponse
 from backend.core.settings import get_settings
@@ -287,6 +289,103 @@ def resume_scheduler(admin: AuthedUser_MW) -> DetailResponse:
         raise HTTPException(status_code=400, detail="Scheduler is not running")
     background_scheduler.resume()
     return DetailResponse(detail="Scheduler resumed")
+
+
+# ── Settings ──────────────────────────────────────────────────────────────
+
+def _mask_key(key: str) -> str:
+    if len(key) <= 8:
+        return "*" * len(key)
+    return key[:4] + "*" * (len(key) - 8) + key[-4:]
+
+
+def _validate_tmdb_key(api_key: str) -> bool:
+    import requests as http_requests
+    try:
+        resp = http_requests.get(
+            "https://api.themoviedb.org/3/movie/550",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=10,
+        )
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+
+def _update_env_file(key: str, value: str) -> None:
+    from pathlib import Path
+    env_path = Path(".env")
+    if not env_path.exists():
+        env_path.write_text(f"{key}={value}\n", encoding="utf-8")
+        return
+
+    lines = env_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    found = False
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith(f"{key}=") or stripped.startswith(f"{key} ="):
+            new_lines.append(f"{key}={value}\n")
+            found = True
+        else:
+            new_lines.append(line)
+    if not found:
+        if new_lines and not new_lines[-1].endswith("\n"):
+            new_lines.append("\n")
+        new_lines.append(f"{key}={value}\n")
+    env_path.write_text("".join(new_lines), encoding="utf-8")
+
+
+@router.get("/tmdb-key", summary="Get current TMDB API key status")
+def get_tmdb_key(admin: AuthedUser_MW) -> TmdbKeyResponse:
+    settings = get_settings()
+    key = settings.tmdb.tmdb_api_key
+    is_placeholder = key in ("placeholder-tmdb-key", "your-tmdb-api-key", "")
+    return TmdbKeyResponse(
+        masked_key=_mask_key(key) if key else "",
+        is_placeholder=is_placeholder,
+    )
+
+
+@router.put("/tmdb-key", summary="Update TMDB API key")
+def update_tmdb_key(body: UpdateTmdbKeyRequest, admin: AuthedUser_MW, request: Request) -> TmdbKeyResponse:
+    new_key = body.api_key.strip()
+    if not new_key:
+        raise HTTPException(status_code=400, detail="API key cannot be empty")
+
+    valid = _validate_tmdb_key(new_key)
+    if not valid:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid TMDB API key. The key was tested against the TMDB API and failed. "
+                   "Make sure you are using the API Read Access Token (v4 auth), not the API Key (v3 auth).",
+        )
+
+    _update_env_file("TMDB_API_KEY", new_key)
+
+    from backend.infrastructure.external.tmdb_client import TMDBClient
+    request.app.state.tmdb_client = TMDBClient(new_key, get_settings().tmdb.tmdb_base_url)
+
+    get_settings.cache_clear()
+
+    return TmdbKeyResponse(
+        masked_key=_mask_key(new_key),
+        is_placeholder=False,
+        is_valid=True,
+    )
+
+
+@router.post("/tmdb-key/validate", summary="Validate a TMDB API key without saving")
+def validate_tmdb_key(body: UpdateTmdbKeyRequest, admin: AuthedUser_MW) -> TmdbKeyResponse:
+    new_key = body.api_key.strip()
+    if not new_key:
+        raise HTTPException(status_code=400, detail="API key cannot be empty")
+    valid = _validate_tmdb_key(new_key)
+    return TmdbKeyResponse(
+        masked_key=_mask_key(new_key),
+        is_placeholder=False,
+        is_valid=valid,
+    )
 
 
 @router.get("/logs", summary="Get recent application logs")

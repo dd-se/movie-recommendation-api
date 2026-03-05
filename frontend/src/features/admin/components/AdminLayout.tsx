@@ -8,6 +8,7 @@ import {
   Shield,
   LayoutDashboard,
   Server,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/admin/database', label: 'Database', icon: Database, exact: false },
   { to: '/admin/queue', label: 'Queue', icon: ListTodo, exact: false, badgeKey: 'queue' as const },
   { to: '/admin/system', label: 'System', icon: Server, exact: false },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, exact: false },
 ];
 
 export default function AdminLayout() {

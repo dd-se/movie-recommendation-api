@@ -93,3 +93,13 @@ class LogsResponse(BaseModel):
     lines: list[str]
     total_lines: int
     log_file: str
+
+
+class TmdbKeyResponse(BaseModel):
+    masked_key: str
+    is_placeholder: bool
+    is_valid: bool | None = None
+
+
+class UpdateTmdbKeyRequest(BaseModel):
+    api_key: str
