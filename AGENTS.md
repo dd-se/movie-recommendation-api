@@ -52,4 +52,5 @@ cd frontend && npm run dev
 - Python version pinned to 3.12 in `.python-version`.
 - The frontend uses Tailwind CSS v4 (`@tailwindcss/vite` plugin) — no `tailwind.config.js` needed.
 - Semantic search (description-based filters) requires the vector store to be populated. Without data, the backend returns 500 for description queries. The frontend handles this gracefully with a "Request failed" message.
-- The `.env` file needs `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_DAYS`, `TMDB_API_KEY`, `LOGLEVEL`, `USE_CUDA`. See `README.md`.
+- The `.env` file needs `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_DAYS`, `TMDB_API_KEY`, `LOGLEVEL`, `USE_CUDA`. See `README.md`. For dev, create with placeholder values: `SECRET_KEY=dev-secret-key-for-local-testing`, `ACCESS_TOKEN_EXPIRE_DAYS=30`, `TMDB_API_KEY=placeholder-tmdb-key`, `LOGLEVEL=INFO`, `USE_CUDA=false`.
+- The `/auth/login` endpoint uses OAuth2 `application/x-www-form-urlencoded` format (`username=...&password=...`), not JSON. The `/auth/signup` endpoint uses JSON.
