@@ -72,3 +72,24 @@ class SystemStats(BaseModel):
     total_queue: int
     queue_by_status: dict[str, int]
     total_backups: int
+
+
+class SystemInfo(BaseModel):
+    python_version: str
+    app_name: str
+    environment: str
+    db_size_bytes: int
+    vector_store_size_bytes: int
+    log_file_size_bytes: int
+    uptime_seconds: float
+    scheduler_running: bool
+
+
+class LogEntry(BaseModel):
+    line: str
+
+
+class LogsResponse(BaseModel):
+    lines: list[str]
+    total_lines: int
+    log_file: str

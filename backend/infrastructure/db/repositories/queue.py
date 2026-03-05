@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 
-from sqlalchemy import Row, func, select, update
+from sqlalchemy import Row, delete, func, select, update
 from sqlalchemy.orm import Session
 
 from ..models.movie import Movie
@@ -68,3 +68,22 @@ class QueueRepository:
             select(MovieQueue.status, func.count(MovieQueue.id)).group_by(MovieQueue.status)
         ).all()
         return {str(s): c for s, c in rows}
+
+    def retry_failed(self) -> int:
+        result = self._session.execute(
+            update(MovieQueue)
+            .where(MovieQueue.status == QueueStatus.FAILED)
+            .values(
+                status=QueueStatus.REFRESH_DATA,
+                retries=0,
+                message=None,
+                updated_at=datetime.now(timezone.utc),
+            )
+        )
+        return result.rowcount
+
+    def purge_completed(self) -> int:
+        result = self._session.execute(
+            delete(MovieQueue).where(MovieQueue.status == QueueStatus.COMPLETED)
+        )
+        return result.rowcount

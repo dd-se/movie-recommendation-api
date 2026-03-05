@@ -1,3 +1,7 @@
+import os
+import sys
+import time
+from collections import deque
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -7,10 +11,12 @@ from backend.api.schemas.admin import (
     AdminUserItem,
     AdminUserList,
     BackupItem,
+    LogsResponse,
     QueueItem,
     QueueList,
     QueueRefreshRequest,
     SchedulerJobItem,
+    SystemInfo,
     SystemStats,
     UpdateScopesRequest,
     UpdateStatusRequest,
@@ -24,6 +30,23 @@ from backend.infrastructure.db.models import MovieQueue, QueueStatus
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 VALID_SCOPES = {"movie:read", "movie:write"}
+
+_start_time = time.monotonic()
+
+
+def _get_dir_size(path: str) -> int:
+    total = 0
+    try:
+        for dirpath, _dirnames, filenames in os.walk(path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                try:
+                    total += os.path.getsize(fp)
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    return total
 
 
 # ── Sync ──────────────────────────────────────────────────────────────────
@@ -158,6 +181,20 @@ def refresh_queue(body: QueueRefreshRequest, admin: AuthedUser_MW, queue_repo: Q
     return QueueRefreshResponse(detail=f"Updated {count} queue entries to '{body.status}'")
 
 
+@router.post("/queue/retry-failed", summary="Retry all failed queue items")
+def retry_failed_queue(admin: AuthedUser_MW, queue_repo: QueueRepoDep, session: DbSession) -> QueueRefreshResponse:
+    count = queue_repo.retry_failed()
+    session.commit()
+    return QueueRefreshResponse(detail=f"Retried {count} failed queue entries")
+
+
+@router.delete("/queue/completed", summary="Purge completed queue items")
+def purge_completed_queue(admin: AuthedUser_MW, queue_repo: QueueRepoDep, session: DbSession) -> QueueRefreshResponse:
+    count = queue_repo.purge_completed()
+    session.commit()
+    return QueueRefreshResponse(detail=f"Purged {count} completed queue entries")
+
+
 # ── System ────────────────────────────────────────────────────────────────
 
 @router.get("/stats", summary="Get system statistics")
@@ -178,6 +215,36 @@ def get_stats(admin: AuthedUser_MW, movie_repo: MovieRepoDep, user_repo: UserRep
     )
 
 
+@router.get("/system-info", summary="Get detailed system information")
+def get_system_info(admin: AuthedUser_MW) -> SystemInfo:
+    from backend.infrastructure.scheduler import background_scheduler
+
+    settings = get_settings()
+    db_size = 0
+    try:
+        db_size = settings.database.database_file.stat().st_size
+    except OSError:
+        pass
+
+    vector_store_size = _get_dir_size(str(settings.embedding.vector_store_path))
+    log_file_size = 0
+    try:
+        log_file_size = settings.logging.log_file.stat().st_size
+    except OSError:
+        pass
+
+    return SystemInfo(
+        python_version=sys.version,
+        app_name=settings.app_name,
+        environment=settings.environment,
+        db_size_bytes=db_size,
+        vector_store_size_bytes=vector_store_size,
+        log_file_size_bytes=log_file_size,
+        uptime_seconds=time.monotonic() - _start_time,
+        scheduler_running=background_scheduler.running,
+    )
+
+
 @router.get("/scheduler", summary="Get scheduler jobs")
 def get_scheduler_jobs(admin: AuthedUser_MW) -> list[SchedulerJobItem]:
     from backend.infrastructure.scheduler import background_scheduler
@@ -189,3 +256,56 @@ def get_scheduler_jobs(admin: AuthedUser_MW) -> list[SchedulerJobItem]:
         )
         for job in background_scheduler.get_jobs()
     ]
+
+
+@router.post("/scheduler/{job_id}/trigger", summary="Trigger a scheduled job immediately")
+def trigger_job(job_id: str, admin: AuthedUser_MW) -> DetailResponse:
+    from backend.infrastructure.scheduler import background_scheduler
+
+    job = background_scheduler.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    job.modify(next_run_time=datetime.now(timezone.utc))
+    return DetailResponse(detail=f"Job '{job_id}' triggered for immediate execution")
+
+
+@router.post("/scheduler/pause", summary="Pause the scheduler")
+def pause_scheduler(admin: AuthedUser_MW) -> DetailResponse:
+    from backend.infrastructure.scheduler import background_scheduler
+
+    if not background_scheduler.running:
+        raise HTTPException(status_code=400, detail="Scheduler is not running")
+    background_scheduler.pause()
+    return DetailResponse(detail="Scheduler paused")
+
+
+@router.post("/scheduler/resume", summary="Resume the scheduler")
+def resume_scheduler(admin: AuthedUser_MW) -> DetailResponse:
+    from backend.infrastructure.scheduler import background_scheduler
+
+    if not background_scheduler.running:
+        raise HTTPException(status_code=400, detail="Scheduler is not running")
+    background_scheduler.resume()
+    return DetailResponse(detail="Scheduler resumed")
+
+
+@router.get("/logs", summary="Get recent application logs")
+def get_logs(
+    admin: AuthedUser_MW,
+    lines: int = Query(100, ge=1, le=1000, description="Number of lines to return"),
+) -> LogsResponse:
+    settings = get_settings()
+    log_file = settings.logging.log_file
+    if not log_file.exists():
+        return LogsResponse(lines=[], total_lines=0, log_file=str(log_file))
+
+    try:
+        with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+            all_lines = deque(f, maxlen=lines)
+        return LogsResponse(
+            lines=[line.rstrip("\n") for line in all_lines],
+            total_lines=len(all_lines),
+            log_file=str(log_file),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read logs: {e}")
