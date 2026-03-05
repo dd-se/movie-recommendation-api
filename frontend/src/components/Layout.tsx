@@ -110,10 +110,10 @@ export default function Layout() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="text-muted-foreground hover:text-foreground">
+                <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
                   Sign In
                 </Button>
-                <Button size="sm" onClick={() => navigate('/signup')} className="bg-primary hover:bg-primary/90">
+                <Button size="sm" onClick={() => navigate('/signup')}>
                   Sign Up
                 </Button>
               </div>

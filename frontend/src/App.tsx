@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthProvider';
+import { ThemeProvider } from '@/context/ThemeProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import Layout from '@/components/Layout';
@@ -31,6 +32,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
             <Routes>
@@ -60,6 +62,7 @@ export default function App() {
             <Toaster position="bottom-right" />
           </TooltipProvider>
         </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>
   );

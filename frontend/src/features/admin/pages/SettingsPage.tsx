@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Key, ExternalLink, CheckCircle2, XCircle, Shield,
-  Eye, EyeOff, Loader2, Copy, Check,
+  Eye, EyeOff, Loader2, Copy, Check, Palette,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { adminApi } from '@/api/admin';
 import type { TmdbKeyStatus } from '../types';
 import { useAdminToken } from '../hooks/useAdminToken';
+import ThemePicker from '@/components/ThemePicker';
 
 const STEPS = [
   {
@@ -96,6 +97,22 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
+
+      {/* Theme */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Theme
+          </CardTitle>
+          <CardDescription>
+            Customize the accent color across the entire application
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThemePicker columns={4} />
+        </CardContent>
+      </Card>
 
       {/* Current key status */}
       <Card>
