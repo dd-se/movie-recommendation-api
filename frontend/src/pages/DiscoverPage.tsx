@@ -5,7 +5,6 @@ import { api } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Endpoint, Movie, MovieFilter } from '@/types';
 import MovieCard from '@/components/MovieCard';
-import MovieExpandedDetail from '@/components/MovieExpandedDetail';
 import { PoweredByTmdb } from '@/components/TmdbBrand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +36,6 @@ export default function DiscoverPage() {
   const [languages, setLanguages] = useState('');
 
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
@@ -143,7 +141,6 @@ export default function DiscoverPage() {
       {/* Search section */}
       <div className="px-8 max-w-5xl mx-auto -mt-4">
         <form onSubmit={handleSearch} className="space-y-4">
-          {/* Endpoint tabs */}
           <Tabs value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
             <TabsList className="bg-secondary/50">
               <TabsTrigger value="/v1/movie">Recommend</TabsTrigger>
@@ -156,7 +153,6 @@ export default function DiscoverPage() {
             </TabsList>
           </Tabs>
 
-          {/* Main filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Title</Label>
@@ -176,7 +172,6 @@ export default function DiscoverPage() {
             </div>
           </div>
 
-          {/* Description */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Description (Semantic Search)</Label>
             <Textarea
@@ -188,7 +183,6 @@ export default function DiscoverPage() {
             />
           </div>
 
-          {/* Advanced toggle */}
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -217,13 +211,12 @@ export default function DiscoverPage() {
             </div>
           )}
 
-          <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 gap-2">
+          <Button type="submit" disabled={loading} className="gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? 'Searching...' : 'Search Movies'}
           </Button>
         </form>
 
-        {/* Error */}
         {error && (
           <div className="mt-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             {error}
@@ -233,12 +226,16 @@ export default function DiscoverPage() {
         {/* Results */}
         <div className="mt-8 pb-12">
           {movies.length > 0 ? (
-            <MovieResults
-              movies={movies}
-              selectedMovie={selectedMovie}
-              onSelect={(m) => setSelectedMovie(selectedMovie?.tmdb_id === m.tmdb_id ? null : m)}
-              onClose={() => setSelectedMovie(null)}
-            />
+            <>
+              <p className="text-sm text-muted-foreground mb-4">
+                <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {movies.map((m) => (
+                  <MovieCard key={m.tmdb_id} movie={m} />
+                ))}
+              </div>
+            </>
           ) : searched && !loading && !error ? (
             <div className="text-center py-20">
               <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -255,90 +252,6 @@ export default function DiscoverPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function useColumns() {
-  const [cols, setCols] = useState(5);
-  useEffect(() => {
-    const update = () => {
-      const w = window.innerWidth;
-      if (w < 640) setCols(2);
-      else if (w < 768) setCols(3);
-      else if (w < 1024) setCols(4);
-      else setCols(5);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-  return cols;
-}
-
-function MovieResults({
-  movies,
-  selectedMovie,
-  onSelect,
-  onClose,
-}: {
-  movies: Movie[];
-  selectedMovie: Movie | null;
-  onSelect: (m: Movie) => void;
-  onClose: () => void;
-}) {
-  const columns = useColumns();
-  const selectedIdx = selectedMovie
-    ? movies.findIndex((m) => m.tmdb_id === selectedMovie.tmdb_id)
-    : -1;
-  const expandAfterRow = selectedIdx >= 0 ? Math.floor(selectedIdx / columns) : -1;
-
-  const rows: { type: 'card'; movie: Movie; idx: number }[][] = [];
-  for (let i = 0; i < movies.length; i += columns) {
-    rows.push(
-      movies.slice(i, i + columns).map((movie, j) => ({
-        type: 'card' as const,
-        movie,
-        idx: i + j,
-      })),
-    );
-  }
-
-  return (
-    <>
-      <p className="text-sm text-muted-foreground mb-4">
-        <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
-      </p>
-      <div className="space-y-3">
-        {rows.map((row, rowIdx) => (
-          <div key={rowIdx}>
-            <div
-              className="grid gap-3"
-              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-            >
-              {row.map(({ movie }) => (
-                <MovieCard
-                  key={movie.tmdb_id}
-                  movie={movie}
-                  onInfo={() => onSelect(movie)}
-                  selected={selectedMovie?.tmdb_id === movie.tmdb_id}
-                />
-              ))}
-            </div>
-            {expandAfterRow === rowIdx && selectedMovie && (
-              <div className="mt-3">
-                <MovieExpandedDetail
-                  key={selectedMovie.tmdb_id}
-                  movie={selectedMovie}
-                  onClose={onClose}
-                  columns={columns}
-                  selectedIndex={selectedIdx}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </>
   );
 }
 

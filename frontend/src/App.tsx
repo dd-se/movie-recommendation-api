@@ -11,6 +11,7 @@ import ExplorePage from '@/pages/ExplorePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import ProfilePage from '@/pages/ProfilePage';
+import MoviePage from '@/pages/MoviePage';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import OverviewPage from '@/features/admin/pages/OverviewPage';
 import UsersPage from '@/features/admin/pages/UsersPage';
@@ -41,6 +42,7 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<DiscoverPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
+                <Route path="/movie/:id" element={<MoviePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
               <Route
