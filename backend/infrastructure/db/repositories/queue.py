@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 
-from sqlalchemy import Row, delete, func, select, update
+from sqlalchemy import Row, func, select, update
 from sqlalchemy.orm import Session
 
 from ..models.movie import Movie
@@ -82,8 +82,3 @@ class QueueRepository:
         )
         return result.rowcount
 
-    def purge_completed(self) -> int:
-        result = self._session.execute(
-            delete(MovieQueue).where(MovieQueue.status == QueueStatus.COMPLETED)
-        )
-        return result.rowcount

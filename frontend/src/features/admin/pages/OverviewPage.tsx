@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users, Film, ListTodo, Database, Play,
-  RotateCcw, Trash2, RefreshCw, Zap, Timer, Server,
+  RotateCcw, RefreshCw, Zap, Timer, Server,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -34,7 +34,6 @@ export default function OverviewPage() {
   const { token } = useAdminToken();
   const queryClient = useQueryClient();
   const [confirmRetry, setConfirmRetry] = useState(false);
-  const [confirmPurge, setConfirmPurge] = useState(false);
 
   const { data: stats, isLoading } = useQuery<SystemStats>({
     queryKey: ['admin', 'stats'],
@@ -74,15 +73,6 @@ export default function OverviewPage() {
 
   const retryMutation = useMutation({
     mutationFn: () => adminApi.retryFailed(token),
-    onSuccess: (data) => {
-      toast.success(data.detail);
-      queryClient.invalidateQueries({ queryKey: ['admin'] });
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
-  const purgeMutation = useMutation({
-    mutationFn: () => adminApi.purgeCompleted(token),
     onSuccess: (data) => {
       toast.success(data.detail);
       queryClient.invalidateQueries({ queryKey: ['admin'] });
@@ -163,7 +153,7 @@ export default function OverviewPage() {
           <CardDescription>Common administrative operations</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <Button
               variant="outline"
               className="justify-start gap-2 h-auto py-3"
@@ -187,19 +177,6 @@ export default function OverviewPage() {
               <div className="text-left">
                 <div className="text-sm font-medium">{retryMutation.isPending ? 'Retrying…' : 'Retry Failed'}</div>
                 <div className="text-xs text-muted-foreground">{failedCount} failed items</div>
-              </div>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="justify-start gap-2 h-auto py-3"
-              onClick={() => setConfirmPurge(true)}
-              disabled={purgeMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 text-red-400" />
-              <div className="text-left">
-                <div className="text-sm font-medium">{purgeMutation.isPending ? 'Purging…' : 'Purge Completed'}</div>
-                <div className="text-xs text-muted-foreground">Clean up queue</div>
               </div>
             </Button>
 
@@ -314,16 +291,6 @@ export default function OverviewPage() {
         description={`This will reset ${failedCount} failed queue items back to 'refresh_data' status so they can be reprocessed.`}
         confirmLabel="Retry All"
         onConfirm={() => { retryMutation.mutate(); setConfirmRetry(false); }}
-      />
-
-      <ConfirmDialog
-        open={confirmPurge}
-        onOpenChange={setConfirmPurge}
-        title="Purge Completed Items"
-        description="This will permanently delete all completed queue entries. This action cannot be undone."
-        confirmLabel="Purge"
-        destructive
-        onConfirm={() => { purgeMutation.mutate(); setConfirmPurge(false); }}
       />
     </div>
   );

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
   ChevronLeft, ChevronRight, RefreshCw, Send,
-  RotateCcw, Trash2, AlertTriangle,
+  RotateCcw, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,7 +39,6 @@ export default function QueuePage() {
   const [refreshOpen, setRefreshOpen] = useState(false);
   const [confirmRefresh, setConfirmRefresh] = useState(false);
   const [confirmRetry, setConfirmRetry] = useState(false);
-  const [confirmPurge, setConfirmPurge] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
   const [refreshForm, setRefreshForm] = useState({
@@ -99,18 +98,8 @@ export default function QueuePage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const purgeMutation = useMutation({
-    mutationFn: () => adminApi.purgeCompleted(token),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['admin'] });
-      toast.success(data.detail);
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
   const totalPages = data ? Math.ceil(data.total / data.per_page) : 0;
   const failedCount = stats?.queue_by_status?.failed ?? 0;
-  const completedCount = stats?.queue_by_status?.completed ?? 0;
 
   return (
     <div className="space-y-6">
@@ -137,32 +126,18 @@ export default function QueuePage() {
       </div>
 
       {/* Quick actions bar */}
-      {(failedCount > 0 || completedCount > 0) && (
+      {failedCount > 0 && (
         <div className="flex flex-wrap gap-3">
-          {failedCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-              onClick={() => setConfirmRetry(true)}
-              disabled={retryMutation.isPending}
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Retry {failedCount} Failed
-            </Button>
-          )}
-          {completedCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-red-500/30 text-red-400 hover:bg-red-500/10"
-              onClick={() => setConfirmPurge(true)}
-              disabled={purgeMutation.isPending}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Purge {completedCount} Completed
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+            onClick={() => setConfirmRetry(true)}
+            disabled={retryMutation.isPending}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Retry {failedCount} Failed
+          </Button>
         </div>
       )}
 
@@ -345,16 +320,6 @@ export default function QueuePage() {
         description={`This will reset ${failedCount} failed queue items back to 'refresh_data' status for reprocessing.`}
         confirmLabel="Retry All"
         onConfirm={() => { retryMutation.mutate(); setConfirmRetry(false); }}
-      />
-
-      <ConfirmDialog
-        open={confirmPurge}
-        onOpenChange={setConfirmPurge}
-        title="Purge Completed Items"
-        description={`This will permanently delete ${completedCount} completed queue entries. This action cannot be undone.`}
-        confirmLabel="Purge"
-        destructive
-        onConfirm={() => { purgeMutation.mutate(); setConfirmPurge(false); }}
       />
     </div>
   );

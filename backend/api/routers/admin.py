@@ -190,13 +190,6 @@ def retry_failed_queue(admin: AuthedUser_MW, queue_repo: QueueRepoDep, session: 
     return QueueRefreshResponse(detail=f"Retried {count} failed queue entries")
 
 
-@router.delete("/queue/completed", summary="Purge completed queue items")
-def purge_completed_queue(admin: AuthedUser_MW, queue_repo: QueueRepoDep, session: DbSession) -> QueueRefreshResponse:
-    count = queue_repo.purge_completed()
-    session.commit()
-    return QueueRefreshResponse(detail=f"Purged {count} completed queue entries")
-
-
 # ── System ────────────────────────────────────────────────────────────────
 
 @router.get("/stats", summary="Get system statistics")

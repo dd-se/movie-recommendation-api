@@ -120,12 +120,6 @@ export const adminApi = {
     });
   },
 
-  purgeCompleted(token: string) {
-    return request<{ detail: string }>('/admin/queue/completed', token, {
-      method: 'DELETE',
-    });
-  },
-
   syncQueue(token: string) {
     return request<{ detail: string }>('/admin/sync', token);
   },
