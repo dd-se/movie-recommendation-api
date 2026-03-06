@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Shield, Clock, Trash2, Loader2, Copy, Check, Key } from 'lucide-react';
+import { User, Shield, Clock, Trash2, Loader2, Copy, Check, Key, Palette } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/api';
 import { Navigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import ThemePicker from '@/components/ThemePicker';
 
 export default function ProfilePage() {
   const { user, token, isAuthenticated } = useAuth();
@@ -95,6 +96,19 @@ export default function ProfilePage() {
                 {copied ? 'Copied' : 'Copy'}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Theme */}
+        <Card className="border-border/30">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Palette className="w-4 h-4 text-muted-foreground" /> Theme
+            </CardTitle>
+            <CardDescription>Choose your preferred accent color</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ThemePicker columns={4} />
           </CardContent>
         </Card>
 

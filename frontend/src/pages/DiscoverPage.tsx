@@ -5,7 +5,6 @@ import { api } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Endpoint, Movie, MovieFilter } from '@/types';
 import MovieCard from '@/components/MovieCard';
-import MovieDetail from '@/components/MovieDetail';
 import { PoweredByTmdb } from '@/components/TmdbBrand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +36,6 @@ export default function DiscoverPage() {
   const [languages, setLanguages] = useState('');
 
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
@@ -143,7 +141,6 @@ export default function DiscoverPage() {
       {/* Search section */}
       <div className="px-8 max-w-5xl mx-auto -mt-4">
         <form onSubmit={handleSearch} className="space-y-4">
-          {/* Endpoint tabs */}
           <Tabs value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
             <TabsList className="bg-secondary/50">
               <TabsTrigger value="/v1/movie">Recommend</TabsTrigger>
@@ -156,7 +153,6 @@ export default function DiscoverPage() {
             </TabsList>
           </Tabs>
 
-          {/* Main filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Title</Label>
@@ -176,7 +172,6 @@ export default function DiscoverPage() {
             </div>
           </div>
 
-          {/* Description */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Description (Semantic Search)</Label>
             <Textarea
@@ -188,7 +183,6 @@ export default function DiscoverPage() {
             />
           </div>
 
-          {/* Advanced toggle */}
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -217,13 +211,12 @@ export default function DiscoverPage() {
             </div>
           )}
 
-          <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 gap-2">
+          <Button type="submit" disabled={loading} className="gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? 'Searching...' : 'Search Movies'}
           </Button>
         </form>
 
-        {/* Error */}
         {error && (
           <div className="mt-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             {error}
@@ -239,7 +232,7 @@ export default function DiscoverPage() {
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {movies.map((m) => (
-                  <MovieCard key={m.tmdb_id} movie={m} onInfo={() => setSelectedMovie(m)} />
+                  <MovieCard key={m.tmdb_id} movie={m} />
                 ))}
               </div>
             </>
@@ -258,8 +251,6 @@ export default function DiscoverPage() {
           ) : null}
         </div>
       </div>
-
-      <MovieDetail movie={selectedMovie} open={!!selectedMovie} onClose={() => setSelectedMovie(null)} />
     </div>
   );
 }

@@ -1,9 +1,12 @@
 import type {
   AdminUserList,
   BackupItem,
+  LogsResponse,
   QueueList,
   SchedulerJob,
+  SystemInfo,
   SystemStats,
+  TmdbKeyStatus,
 } from '@/features/admin/types';
 
 const BASE = '';
@@ -111,6 +114,12 @@ export const adminApi = {
     });
   },
 
+  retryFailed(token: string) {
+    return request<{ detail: string }>('/admin/queue/retry-failed', token, {
+      method: 'POST',
+    });
+  },
+
   syncQueue(token: string) {
     return request<{ detail: string }>('/admin/sync', token);
   },
@@ -121,8 +130,54 @@ export const adminApi = {
     return request<SystemStats>('/admin/stats', token);
   },
 
+  getSystemInfo(token: string) {
+    return request<SystemInfo>('/admin/system-info', token);
+  },
+
   getScheduler(token: string) {
     return request<SchedulerJob[]>('/admin/scheduler', token);
+  },
+
+  triggerJob(token: string, jobId: string) {
+    return request<{ detail: string }>(`/admin/scheduler/${jobId}/trigger`, token, {
+      method: 'POST',
+    });
+  },
+
+  pauseScheduler(token: string) {
+    return request<{ detail: string }>('/admin/scheduler/pause', token, {
+      method: 'POST',
+    });
+  },
+
+  resumeScheduler(token: string) {
+    return request<{ detail: string }>('/admin/scheduler/resume', token, {
+      method: 'POST',
+    });
+  },
+
+  getLogs(token: string, lines = 100) {
+    return request<LogsResponse>(`/admin/logs?lines=${lines}`, token);
+  },
+
+  // ── Settings ────────────────────────────────────────────────────────
+
+  getTmdbKey(token: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key', token);
+  },
+
+  updateTmdbKey(token: string, apiKey: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key', token, {
+      method: 'PUT',
+      body: JSON.stringify({ api_key: apiKey }),
+    });
+  },
+
+  validateTmdbKey(token: string, apiKey: string) {
+    return request<TmdbKeyStatus>('/admin/tmdb-key/validate', token, {
+      method: 'POST',
+      body: JSON.stringify({ api_key: apiKey }),
+    });
   },
 
   getHealth() {

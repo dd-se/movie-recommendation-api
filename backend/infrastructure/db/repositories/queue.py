@@ -68,3 +68,17 @@ class QueueRepository:
             select(MovieQueue.status, func.count(MovieQueue.id)).group_by(MovieQueue.status)
         ).all()
         return {str(s): c for s, c in rows}
+
+    def retry_failed(self) -> int:
+        result = self._session.execute(
+            update(MovieQueue)
+            .where(MovieQueue.status == QueueStatus.FAILED)
+            .values(
+                status=QueueStatus.REFRESH_DATA,
+                retries=0,
+                message=None,
+                updated_at=datetime.now(timezone.utc),
+            )
+        )
+        return result.rowcount
+

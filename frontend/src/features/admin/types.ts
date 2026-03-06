@@ -53,6 +53,29 @@ export interface SystemStats {
   total_backups: number;
 }
 
+export interface SystemInfo {
+  python_version: string;
+  app_name: string;
+  environment: string;
+  db_size_bytes: number;
+  vector_store_size_bytes: number;
+  log_file_size_bytes: number;
+  uptime_seconds: number;
+  scheduler_running: boolean;
+}
+
+export interface LogsResponse {
+  lines: string[];
+  total_lines: number;
+  log_file: string;
+}
+
+export interface TmdbKeyStatus {
+  masked_key: string;
+  is_placeholder: boolean;
+  is_valid: boolean | null;
+}
+
 export type QueueStatusValue =
   | 'refresh_data'
   | 'preprocess_description'
