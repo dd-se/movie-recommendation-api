@@ -56,7 +56,7 @@ export default function Layout() {
         <div className="relative z-10 flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
-              <TmdbLogo variant="short" className="h-4" />
+              <TmdbLogo variant="short" as="span" className="h-4" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-1">

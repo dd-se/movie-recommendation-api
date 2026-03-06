@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useLayoutEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Star, Clock, TrendingUp, Users, ArrowLeft, ExternalLink, Play,
@@ -28,8 +28,9 @@ export default function MoviePage() {
   const [loading, setLoading] = useState(!initialMovie);
   const [imgError, setImgError] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    const el = document.getElementById('main-scroll');
+    if (el) el.scrollTop = 0;
   }, [id]);
 
   useEffect(() => {

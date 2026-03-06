@@ -1,14 +1,19 @@
 interface TmdbLogoProps {
   variant?: 'short' | 'long';
   className?: string;
+  as?: 'a' | 'span' | 'div';
 }
 
-export function TmdbLogo({ variant = 'short', className = '' }: TmdbLogoProps) {
+export function TmdbLogo({ variant = 'short', className = '', as = 'a' }: TmdbLogoProps) {
   const src = variant === 'long' ? '/tmdb/tmdb-logo-long.svg' : '/tmdb/tmdb-logo-short.svg';
+  const Wrapper = as;
   return (
-    <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" className={`inline-block ${className}`}>
+    <Wrapper
+      className={`inline-block ${className}`}
+      {...(as === 'a' ? { href: 'https://www.themoviedb.org/', target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
       <img src={src} alt="The Movie Database (TMDB)" className="h-full w-auto" />
-    </a>
+    </Wrapper>
   );
 }
 
