@@ -10,9 +10,10 @@ interface Props {
   movie: Movie;
   onInfo: () => void;
   variant?: 'poster' | 'backdrop';
+  selected?: boolean;
 }
 
-export default function MovieCard({ movie, onInfo, variant = 'poster' }: Props) {
+export default function MovieCard({ movie, onInfo, variant = 'poster', selected = false }: Props) {
   const [imgError, setImgError] = useState(false);
   const year = movie.release_date?.split('-')[0];
   const rating = movie.vote_average?.toFixed(1);
@@ -56,7 +57,9 @@ export default function MovieCard({ movie, onInfo, variant = 'poster' }: Props) 
 
   return (
     <div className="group relative cursor-pointer" onClick={onInfo}>
-      <div className="aspect-[2/3] rounded-md overflow-hidden bg-card relative">
+      <div className={`aspect-[2/3] rounded-md overflow-hidden bg-card relative transition-all duration-300 ${
+        selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]' : ''
+      }`}>
         {movie.poster_path && !imgError ? (
           <img
             src={`${TMDB_IMG}${movie.poster_path}`}

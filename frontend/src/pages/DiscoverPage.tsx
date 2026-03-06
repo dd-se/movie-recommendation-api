@@ -5,7 +5,7 @@ import { api } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Endpoint, Movie, MovieFilter } from '@/types';
 import MovieCard from '@/components/MovieCard';
-import MovieDetail from '@/components/MovieDetail';
+import MovieExpandedDetail from '@/components/MovieExpandedDetail';
 import { PoweredByTmdb } from '@/components/TmdbBrand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -233,16 +233,12 @@ export default function DiscoverPage() {
         {/* Results */}
         <div className="mt-8 pb-12">
           {movies.length > 0 ? (
-            <>
-              <p className="text-sm text-muted-foreground mb-4">
-                <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {movies.map((m) => (
-                  <MovieCard key={m.tmdb_id} movie={m} onInfo={() => setSelectedMovie(m)} />
-                ))}
-              </div>
-            </>
+            <MovieResults
+              movies={movies}
+              selectedMovie={selectedMovie}
+              onSelect={(m) => setSelectedMovie(selectedMovie?.tmdb_id === m.tmdb_id ? null : m)}
+              onClose={() => setSelectedMovie(null)}
+            />
           ) : searched && !loading && !error ? (
             <div className="text-center py-20">
               <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -258,9 +254,91 @@ export default function DiscoverPage() {
           ) : null}
         </div>
       </div>
-
-      <MovieDetail movie={selectedMovie} open={!!selectedMovie} onClose={() => setSelectedMovie(null)} />
     </div>
+  );
+}
+
+function useColumns() {
+  const [cols, setCols] = useState(5);
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w < 640) setCols(2);
+      else if (w < 768) setCols(3);
+      else if (w < 1024) setCols(4);
+      else setCols(5);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return cols;
+}
+
+function MovieResults({
+  movies,
+  selectedMovie,
+  onSelect,
+  onClose,
+}: {
+  movies: Movie[];
+  selectedMovie: Movie | null;
+  onSelect: (m: Movie) => void;
+  onClose: () => void;
+}) {
+  const columns = useColumns();
+  const selectedIdx = selectedMovie
+    ? movies.findIndex((m) => m.tmdb_id === selectedMovie.tmdb_id)
+    : -1;
+  const expandAfterRow = selectedIdx >= 0 ? Math.floor(selectedIdx / columns) : -1;
+
+  const rows: { type: 'card'; movie: Movie; idx: number }[][] = [];
+  for (let i = 0; i < movies.length; i += columns) {
+    rows.push(
+      movies.slice(i, i + columns).map((movie, j) => ({
+        type: 'card' as const,
+        movie,
+        idx: i + j,
+      })),
+    );
+  }
+
+  return (
+    <>
+      <p className="text-sm text-muted-foreground mb-4">
+        <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
+      </p>
+      <div className="space-y-3">
+        {rows.map((row, rowIdx) => (
+          <div key={rowIdx}>
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+            >
+              {row.map(({ movie }) => (
+                <MovieCard
+                  key={movie.tmdb_id}
+                  movie={movie}
+                  onInfo={() => onSelect(movie)}
+                  selected={selectedMovie?.tmdb_id === movie.tmdb_id}
+                />
+              ))}
+            </div>
+            {expandAfterRow === rowIdx && selectedMovie && (
+              <div className="mt-3">
+                <MovieExpandedDetail
+                  key={selectedMovie.tmdb_id}
+                  movie={selectedMovie}
+                  onClose={onClose}
+                  columns={columns}
+                  selectedIndex={selectedIdx}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
