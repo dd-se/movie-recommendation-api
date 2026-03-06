@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { TmdbLogo } from '@/components/TmdbBrand';
+// import { TmdbLogo } from '@/components/TmdbBrand';
 
-const TMDB_IMG = 'https://image.tmdb.org/t/p/w780';
+const TMDB_IMG_PREFIX = 'https://image.tmdb.org/t/p/w780';
 
 interface Props {
   movie: Movie | null;
@@ -31,7 +31,7 @@ export default function MovieDetail({ movie, open, onClose }: Props) {
         <div className="relative aspect-video bg-secondary">
           {movie.poster_path && !imgError ? (
             <img
-              src={`${TMDB_IMG}${movie.poster_path}`}
+              src={`${TMDB_IMG_PREFIX}${movie.poster_path}`}
               alt={movie.title}
               className="w-full h-full object-cover"
               onError={() => setImgError(true)}
@@ -129,7 +129,7 @@ export default function MovieDetail({ movie, open, onClose }: Props) {
                 View on TMDB
               </a>
             </Button>
-            <TmdbLogo variant="short" className="h-2.5 opacity-40" />
+            {/* <TmdbLogo variant="short" className="h-2.5 opacity-40" /> */}
           </div>
         </div>
       </DialogContent>
