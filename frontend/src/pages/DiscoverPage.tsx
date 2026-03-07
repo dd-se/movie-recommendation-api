@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
 import { api } from '@/api';
@@ -211,8 +211,45 @@ export default function DiscoverPage() {
                 Filters
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] sm:w-[360px] overflow-y-auto">
-              <SidebarContent />
+            <SheetContent side="left" className="w-[85vw] max-w-[320px] sm:max-w-[360px] p-4 sm:p-6">
+              <SidebarContent
+                endpoint={endpoint}
+                setEndpoint={setEndpoint}
+                title={title}
+                setTitle={setTitle}
+                description={description}
+                setDescription={setDescription}
+                cast={cast}
+                setCast={setCast}
+                genres={genres}
+                setGenres={setGenres}
+                nResults={nResults}
+                setNResults={setNResults}
+                voteMin={voteMin}
+                setVoteMin={setVoteMin}
+                voteCountMin={voteCountMin}
+                setVoteCountMin={setVoteCountMin}
+                popularityMin={popularityMin}
+                setPopularityMin={setPopularityMin}
+                releaseDateFrom={releaseDateFrom}
+                setReleaseDateFrom={setReleaseDateFrom}
+                releaseDateTo={releaseDateTo}
+                setReleaseDateTo={setReleaseDateTo}
+                runtimeMin={runtimeMin}
+                setRuntimeMin={setRuntimeMin}
+                runtimeMax={runtimeMax}
+                setRuntimeMax={setRuntimeMax}
+                keywords={keywords}
+                setKeywords={setKeywords}
+                countries={countries}
+                setCountries={setCountries}
+                languages={languages}
+                setLanguages={setLanguages}
+                loading={loading}
+                error={error}
+                isAuthenticated={isAuthenticated}
+                onSearch={handleSearch}
+              />
             </SheetContent>
           </Sheet>
         </div>
@@ -220,8 +257,45 @@ export default function DiscoverPage() {
 
       <div className="flex">
         {/* Desktop Sidebar - Search Form */}
-        <aside className="hidden md:block sticky top-16 w-80 bg-background border-r border-border/50 p-4 min-h-[calc(100vh-4rem)]">
-          <SidebarContent />
+        <aside className="hidden md:block fixed top-16 left-0 w-80 h-[calc(100vh-4rem)] bg-background border-r border-border/50 p-4 overflow-y-auto z-40">
+          <SidebarContent
+            endpoint={endpoint}
+            setEndpoint={setEndpoint}
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            cast={cast}
+            setCast={setCast}
+            genres={genres}
+            setGenres={setGenres}
+            nResults={nResults}
+            setNResults={setNResults}
+            voteMin={voteMin}
+            setVoteMin={setVoteMin}
+            voteCountMin={voteCountMin}
+            setVoteCountMin={setVoteCountMin}
+            popularityMin={popularityMin}
+            setPopularityMin={setPopularityMin}
+            releaseDateFrom={releaseDateFrom}
+            setReleaseDateFrom={setReleaseDateFrom}
+            releaseDateTo={releaseDateTo}
+            setReleaseDateTo={setReleaseDateTo}
+            runtimeMin={runtimeMin}
+            setRuntimeMin={setRuntimeMin}
+            runtimeMax={runtimeMax}
+            setRuntimeMax={setRuntimeMax}
+            keywords={keywords}
+            setKeywords={setKeywords}
+            countries={countries}
+            setCountries={setCountries}
+            languages={languages}
+            setLanguages={setLanguages}
+            loading={loading}
+            error={error}
+            isAuthenticated={isAuthenticated}
+            onSearch={handleSearch}
+          />
         </aside>
 
         {/* Main Content - Results */}
@@ -254,105 +328,6 @@ export default function DiscoverPage() {
       </div>
     </div>
   );
-
-  function SidebarContent() {
-    return (
-      <div className="space-y-4">
-        <Tabs value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="/v1/movie" className="flex-1">Recommend</TabsTrigger>
-            <TabsTrigger value="/v2/movie" disabled={!isAuthenticated} className="flex-1">
-              Smart {!isAuthenticated && '🔒'}
-            </TabsTrigger>
-            <TabsTrigger value="/v2/search" disabled={!isAuthenticated} className="flex-1">
-              Semantic {!isAuthenticated && '🔒'}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <Accordion type="multiple" defaultValue={['basic', 'description']} className="w-full">
-          {/* Basic Filters */}
-          <AccordionItem value="basic">
-            <AccordionTrigger className="text-sm font-medium">Basic Filters</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-3 pt-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Inception" className="bg-card" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Genres</Label>
-                  <Input value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="Action, Thriller" className="bg-card" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">{endpoint === '/v2/search' ? 'Max Results' : 'Cast'}</Label>
-                  {endpoint === '/v2/search' ? (
-                    <Input type="number" min={1} max={21} value={nResults} onChange={(e) => setNResults(parseInt(e.target.value) || 6)} className="bg-card" />
-                  ) : (
-                    <Input value={cast} onChange={(e) => setCast(e.target.value)} placeholder="Brad Pitt, Edward Norton" className="bg-card" />
-                  )}
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Description */}
-          <AccordionItem value="description">
-            <AccordionTrigger className="text-sm font-medium">Description (Semantic)</AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2">
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="A computer hacker who discovers reality is a simulation..."
-                  rows={3}
-                  className="bg-card resize-none"
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Advanced Filters */}
-          <AccordionItem value="advanced">
-            <AccordionTrigger className="text-sm font-medium">Advanced Filters</AccordionTrigger>
-            <AccordionContent>
-              <div className="pt-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <FilterInput label="Min Vote" value={voteMin} onChange={setVoteMin} placeholder="6.5" type="number" />
-                  <FilterInput label="Min Votes" value={voteCountMin} onChange={setVoteCountMin} placeholder="100" type="number" />
-                  <FilterInput label="Min Pop." value={popularityMin} onChange={setPopularityMin} placeholder="10" type="number" />
-                  <FilterInput label="After" value={releaseDateFrom} onChange={setReleaseDateFrom} placeholder="YYYY-MM-DD" />
-                  <FilterInput label="Before" value={releaseDateTo} onChange={setReleaseDateTo} placeholder="YYYY-MM-DD" />
-                  <FilterInput label="Min Min." value={runtimeMin} onChange={setRuntimeMin} placeholder="90" type="number" />
-                  <FilterInput label="Max Min." value={runtimeMax} onChange={setRuntimeMax} placeholder="180" type="number" />
-                  <FilterInput label="Keywords" value={keywords} onChange={setKeywords} placeholder="hacker" />
-                  <FilterInput label="Countries" value={countries} onChange={setCountries} placeholder="US" />
-                  <FilterInput label="Lang." value={languages} onChange={setLanguages} placeholder="English" />
-                  {endpoint === '/v2/search' && (
-                    <FilterInput label="Cast" value={cast} onChange={setCast} placeholder="Brad Pitt" />
-                  )}
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        {/* Unified Search Button */}
-        <Button onClick={handleSearch} disabled={loading} className="w-full gap-2">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          {loading ? 'Searching...' : 'Search Movies'}
-        </Button>
-
-        {error && (
-          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-            {error}
-          </div>
-        )}
-      </div>
-    );
-  }
 }
 
 function FilterInput({
@@ -363,7 +338,178 @@ function FilterInput({
   return (
     <div className="space-y-1">
       <Label className="text-[11px] text-muted-foreground">{label}</Label>
-      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-background/50 h-8 text-xs" />
+      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-background/50 h-8 sm:h-9 text-xs sm:text-sm" />
     </div>
   );
 }
+
+interface SidebarContentProps {
+  endpoint: Endpoint;
+  setEndpoint: (v: Endpoint) => void;
+  title: string;
+  setTitle: (v: string) => void;
+  description: string;
+  setDescription: (v: string) => void;
+  cast: string;
+  setCast: (v: string) => void;
+  genres: string;
+  setGenres: (v: string) => void;
+  nResults: number;
+  setNResults: (v: number) => void;
+  voteMin: string;
+  setVoteMin: (v: string) => void;
+  voteCountMin: string;
+  setVoteCountMin: (v: string) => void;
+  popularityMin: string;
+  setPopularityMin: (v: string) => void;
+  releaseDateFrom: string;
+  setReleaseDateFrom: (v: string) => void;
+  releaseDateTo: string;
+  setReleaseDateTo: (v: string) => void;
+  runtimeMin: string;
+  setRuntimeMin: (v: string) => void;
+  runtimeMax: string;
+  setRuntimeMax: (v: string) => void;
+  keywords: string;
+  setKeywords: (v: string) => void;
+  countries: string;
+  setCountries: (v: string) => void;
+  languages: string;
+  setLanguages: (v: string) => void;
+  loading: boolean;
+  error: string;
+  isAuthenticated: boolean;
+  onSearch: () => void;
+}
+
+const SidebarContent = memo(function SidebarContent({
+  endpoint,
+  setEndpoint,
+  title,
+  setTitle,
+  description,
+  setDescription,
+  cast,
+  setCast,
+  genres,
+  setGenres,
+  nResults,
+  setNResults,
+  voteMin,
+  setVoteMin,
+  voteCountMin,
+  setVoteCountMin,
+  popularityMin,
+  setPopularityMin,
+  releaseDateFrom,
+  setReleaseDateFrom,
+  releaseDateTo,
+  setReleaseDateTo,
+  runtimeMin,
+  setRuntimeMin,
+  runtimeMax,
+  setRuntimeMax,
+  keywords,
+  setKeywords,
+  countries,
+  setCountries,
+  languages,
+  setLanguages,
+  loading,
+  error,
+  isAuthenticated,
+  onSearch,
+}: SidebarContentProps) {
+  return (
+    <form onSubmit={onSearch} className="space-y-4">
+      <Tabs value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
+        <TabsList className="w-full">
+          <TabsTrigger value="/v1/movie" className="flex-1 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-none">Single</TabsTrigger>
+          <TabsTrigger value="/v2/movie" disabled={!isAuthenticated} className="flex-1 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-none">
+            Smart {!isAuthenticated && '🔒'}
+          </TabsTrigger>
+          <TabsTrigger value="/v2/search" disabled={!isAuthenticated} className="flex-1 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-none">
+            Search {!isAuthenticated && '🔒'}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <Accordion type="multiple" defaultValue={['basic', 'description']} className="w-full">
+        <AccordionItem value="basic">
+          <AccordionTrigger className="text-sm font-medium py-3">Basic Filters</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3 pt-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Title</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Inception" className="bg-card h-9 sm:h-10 text-sm" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Genres</Label>
+                <Input value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="Action, Thriller" className="bg-card h-9 sm:h-10 text-sm" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{endpoint === '/v2/search' ? 'Max Results' : 'Cast'}</Label>
+                {endpoint === '/v2/search' ? (
+                  <Input type="number" min={1} max={21} value={nResults} onChange={(e) => setNResults(parseInt(e.target.value) || 6)} className="bg-card h-9 sm:h-10 text-sm" />
+                ) : (
+                  <Input value={cast} onChange={(e) => setCast(e.target.value)} placeholder="Brad Pitt, Edward Norton" className="bg-card h-9 sm:h-10 text-sm" />
+                )}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="description">
+          <AccordionTrigger className="text-sm font-medium py-3">Description</AccordionTrigger>
+          <AccordionContent>
+            <div className="pt-2">
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="A computer hacker who discovers reality is a simulation..."
+                rows={3}
+                className="bg-card resize-none text-sm"
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="advanced">
+          <AccordionTrigger className="text-sm font-medium py-3">Advanced Filters</AccordionTrigger>
+          <AccordionContent>
+            <div className="pt-2">
+              <div className="grid grid-cols-2 gap-2">
+                <FilterInput label="Min Vote" value={voteMin} onChange={setVoteMin} placeholder="6.5" type="number" />
+                <FilterInput label="Min Votes" value={voteCountMin} onChange={setVoteCountMin} placeholder="100" type="number" />
+                <FilterInput label="Min Pop." value={popularityMin} onChange={setPopularityMin} placeholder="10" type="number" />
+                <FilterInput label="After" value={releaseDateFrom} onChange={setReleaseDateFrom} placeholder="YYYY-MM-DD" />
+                <FilterInput label="Before" value={releaseDateTo} onChange={setReleaseDateTo} placeholder="YYYY-MM-DD" />
+                <FilterInput label="Min Min." value={runtimeMin} onChange={setRuntimeMin} placeholder="90" type="number" />
+                <FilterInput label="Max Min." value={runtimeMax} onChange={setRuntimeMax} placeholder="180" type="number" />
+                <FilterInput label="Keywords" value={keywords} onChange={setKeywords} placeholder="hacker" />
+                <FilterInput label="Countries" value={countries} onChange={setCountries} placeholder="US" />
+                <FilterInput label="Lang." value={languages} onChange={setLanguages} placeholder="English" />
+                {endpoint === '/v2/search' && (
+                  <FilterInput label="Cast" value={cast} onChange={setCast} placeholder="Brad Pitt" />
+                )}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <Button onClick={onSearch} disabled={loading} className="w-full gap-2">
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+        {loading ? 'Searching...' : 'Search Movies'}
+      </Button>
+
+      {error && (
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+          {error}
+        </div>
+      )}
+    </form>
+  );
+});
