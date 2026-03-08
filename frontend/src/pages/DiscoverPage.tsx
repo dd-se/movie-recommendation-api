@@ -21,6 +21,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { TmdbLogo, TmdbAttribution } from '@/components/TmdbBrand';
+import { Separator } from '@/components/ui/separator';
 
 export default function DiscoverPage() {
   const { token, isAuthenticated } = useAuth();
@@ -192,11 +194,11 @@ export default function DiscoverPage() {
   }, [handleSearch]);
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen flex flex-col">
       {/* Hero */}
-      <div className="relative h-[320px] flex items-end overflow-hidden cinema-bg">
+      <div className="relative h-[320px] flex-shrink-0 flex items-end overflow-hidden cinema-bg">
         <div className="absolute inset-0 cinema-overlay-hero" />
-        <div className="relative px-8 pb-8 max-w-6xl mx-auto w-full flex items-center justify-between">
+        <div className="relative px-8 pb-8 md:pl-[24rem] md:pr-8 max-w-6xl  w-full flex items-center justify-between">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-lg">Discover Movies</h1>
             <p className="text-lg text-muted-foreground drop-shadow-sm mt-2">
@@ -255,9 +257,9 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {/* Desktop Sidebar - Search Form */}
-        <aside className="hidden md:block fixed top-16 left-0 w-80 h-[calc(100vh-4rem)] bg-background border-r border-border/50 p-4 overflow-y-auto z-40">
+        <aside className="hidden glass-sidebar md:block fixed top-16 left-0 w-80 h-[calc(100vh-4rem)] p-4 overflow-y-auto z-40">
           <SidebarContent
             endpoint={endpoint}
             setEndpoint={setEndpoint}
@@ -299,13 +301,14 @@ export default function DiscoverPage() {
         </aside>
 
         {/* Main Content - Results */}
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 md:ml-[23rem] min-w-0 flex flex-col min-h-0">
+          <div className="flex-1 min-h-0">
           {movies.length > 0 ? (
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl">
               <p className="text-sm text-muted-foreground mb-4">
                 <span className="text-foreground font-semibold">{movies.length}</span> movie{movies.length !== 1 ? 's' : ''} found
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {movies.map((m) => (
                   <MovieCard key={m.tmdb_id} movie={m} />
                 ))}
@@ -324,6 +327,26 @@ export default function DiscoverPage() {
               <p className="text-sm text-muted-foreground text-center">Use the search filters to find your next favorite movie</p>
             </div>
           ) : null}
+          </div>
+
+          {/* TMDB attribution - footer at bottom of content column */}
+          <footer className="border-t border-border/50 mt-auto pt-8 pb-8 max-w-5xl flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="flex flex-col gap-3">
+                <TmdbLogo variant="long" className="h-4 opacity-70 hover:opacity-100 transition-opacity" />
+                <TmdbAttribution />
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  TMDB
+                </a>
+                <Separator orientation="vertical" className="h-3" />
+                <a href="https://developer.themoviedb.org/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  TMDB API
+                </a>
+              </div>
+            </div>
+          </footer>
         </main>
       </div>
     </div>

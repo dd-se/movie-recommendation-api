@@ -17,17 +17,15 @@ class MovieRepository:
         return self._session
 
     def find_by_tmdb_id(self, tmdb_id: int) -> Movie | None:
-        return self._session.execute(
-            select(Movie).where(Movie.tmdb_id == tmdb_id)
-        ).scalar()
+        return self._session.execute(select(Movie).where(Movie.tmdb_id == tmdb_id)).scalar()
 
     def find_tmdb_ids_in_db(self, tmdb_ids: set[int]) -> list[int]:
-        return self._session.execute(
-            select(Movie.tmdb_id).where(Movie.tmdb_id.in_(tmdb_ids))
-        ).scalars().all()
+        return self._session.execute(select(Movie.tmdb_id).where(Movie.tmdb_id.in_(tmdb_ids))).scalars().all()
 
     def find_tmdb_ids_by_filters(
-        self, title: str | None = None, cast: list[str] | None = None,
+        self,
+        title: str | None = None,
+        cast: list[str] | None = None,
     ) -> list[int]:
         q = select(Movie.tmdb_id)
         if title:
@@ -101,7 +99,9 @@ class MovieRepository:
 
     @staticmethod
     def _apply_list_filter(
-        query: Select[tuple[Movie]], attribute: InstrumentedAttribute, values: list[str],  # type: ignore[type-arg]
+        query: Select[tuple[Movie]],
+        attribute: InstrumentedAttribute,
+        values: list[str]
     ) -> Select[tuple[Movie]]:
         conditions = []
         for v in values:

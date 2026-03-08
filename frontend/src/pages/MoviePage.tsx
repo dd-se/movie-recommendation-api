@@ -50,16 +50,25 @@ export default function MoviePage() {
 
   useEffect(() => {
     if (!movie?.genres) return;
-    const genres = movie.genres.split(', ').slice(0, 2);
+    const genres = movie.genres.split(', ').slice(0, 4);
     if (genres.length === 0) return;
     let cancelled = false;
 
-    api.getMovies('/v1/movie', { genres }, token ?? undefined)
-      .then((movies) => {
-        if (cancelled) return;
-        setSimilar(movies.filter((m) => m.tmdb_id !== movie.tmdb_id).slice(0, 12));
-      })
-      .catch(() => { if (!cancelled) setSimilar([]); });
+    if (token) {
+      api.getMovies('/v2/search', { genres, n_results: 7 }, token)
+        .then((movies) => {
+          if (cancelled) return;
+          setSimilar(movies.filter((m) => m.tmdb_id !== movie.tmdb_id).slice(0, 7));
+        })
+        .catch(() => { if (!cancelled) setSimilar([]); });
+    } else {
+      api.getMovies('/v1/movie', { genres }, undefined)
+        .then((movies) => {
+          if (cancelled) return;
+          setSimilar(movies.filter((m) => m.tmdb_id !== movie.tmdb_id).slice(0, 7));
+        })
+        .catch(() => { if (!cancelled) setSimilar([]); });
+    }
 
     return () => { cancelled = true; };
   }, [movie, token]);
@@ -87,7 +96,6 @@ export default function MoviePage() {
   }
 
   const rating = movie.vote_average?.toFixed(1);
-  const ratingPercent = movie.vote_average ? Math.round(movie.vote_average * 10) : 0;
   const year = movie.release_date?.split('-')[0];
 
   return (
@@ -130,9 +138,6 @@ export default function MoviePage() {
               <span className="flex items-center gap-1.5 text-base font-bold text-green-400">
                 <Star className="w-5 h-5 fill-green-400" /> {rating}
               </span>
-            )}
-            {ratingPercent > 0 && (
-              <span className="text-sm font-semibold text-green-400">{ratingPercent}% Match</span>
             )}
             {year && <span className="text-sm text-white/70">{year}</span>}
             {movie.runtime && <span className="text-sm text-white/70">{movie.runtime} min</span>}

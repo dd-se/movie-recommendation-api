@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from fastapi import HTTPException
+
 from backend.core.logging import get_logger
 from backend.infrastructure.db.models.movie import Movie
 from backend.infrastructure.db.repositories.movie import MovieRepository
@@ -41,13 +43,17 @@ class MovieQueryService:
         )
 
     def search_excluding(
-        self, filters: MovieFilter, exclude_tmdb_ids: list[int] | None, limit: int = 1,
+        self,
+        filters: MovieFilter,
+        exclude_tmdb_ids: list[int] | None,
+        limit: int = 1,
     ) -> list[Movie] | list[MovieSchema]:
         """Search excluding already-recommended movies. Same return type logic as search()."""
         if filters.description:
             where, where_doc = self._build_chromadb_filters(filters, exclude_tmdb_ids)
             raw = self._vector_store.query(filters.description, where, where_doc, k=limit)
             from backend.api.schemas.movie import movie_schema_list_adapter
+
             return movie_schema_list_adapter.validate_python(raw)
         return self._movie_repo.search(
             exclude_tmdb_ids=exclude_tmdb_ids,
@@ -76,6 +82,13 @@ class MovieQueryService:
         runtime_min: int = 70,
     ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
         meta: list[dict[str, Any]] = []
+        if filters.title or filters.cast:
+            tmdb_ids = self._movie_repo.find_tmdb_ids_by_filters(filters.title, filters.cast)
+            if tmdb_ids:
+                meta.append({"tmdb_id": {"$in": tmdb_ids}})
+            else:
+                raise HTTPException(status_code=404, detail="No movies found matching title/cast filters")
+
         if exclude_tmdb_ids:
             meta.append({"tmdb_id": {"$nin": exclude_tmdb_ids}})
         meta.append({"vote_average": {"$gte": filters.vote_average_min or vote_average_min}})
@@ -89,11 +102,6 @@ class MovieQueryService:
             meta.append({"runtime": {"$lte": filters.runtime_max}})
         if filters.popularity_min:
             meta.append({"popularity": {"$gte": filters.popularity_min}})
-        if filters.title or filters.cast:
-            tmdb_ids = self._movie_repo.find_tmdb_ids_by_filters(
-                filters.title, filters.cast or None
-            )
-            meta.append({"tmdb_id": {"$in": tmdb_ids}})
 
         docs: list[dict[str, str]] = []
         for fn, vals in [

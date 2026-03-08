@@ -126,7 +126,8 @@ export default function Layout() {
       <main id="main-scroll" className="flex-1 overflow-y-auto pt-16">
         <Outlet />
 
-        {/* Footer with TMDB attribution */}
+        {/* Footer with TMDB attribution - hidden on Discover; that page renders its own aligned footer */}
+        {location.pathname !== '/' && (
         <footer className="border-t border-border/50 mt-12">
           <div className="max-w-6xl mx-auto px-8 py-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -152,6 +153,7 @@ export default function Layout() {
             </div>
           </div>
         </footer>
+        )}
       </main>
     </div>
   );
